@@ -1,0 +1,36 @@
+node_modules
+.pnpm-store
+
+# Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# Env
+.env
+.env*.local
+
+# Payload
+/src/app/(payload)/admin/importMap.js.bak
+
+# Locally-uploaded media (dev fallback when R2 is not configured)
+/public/media-uploads/
+/media/
+
+# Working folders used while building the site
+/.research/
+/.scaffold/
+
+# OS / editor
+.DS_Store
+*.pem
+.vercel
+.idea
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log

@@ -1,0 +1,9 @@
+# The raw client assets are the photographic/video masters (26–52 MB each,
+# ~1.3 GB total). They are the source for scripts/process-assets.mjs and must
+# never be uploaded to Vercel — only the processed output in assets-web/ and
+# public/ is deployed.
+Gallery/
+Homepage pic combo/
+Starting video/
+.research/
+.scaffold/

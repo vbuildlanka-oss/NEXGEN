@@ -1,0 +1,332 @@
+@import 'tailwindcss';
+
+/* ───────────────────────────────────────────────────────────────────────────
+   NexGen theme tokens
+
+   The brief fixes the palette to four colours. Chrome Silver Black is the base
+   surface, Chrome Silver Grey carries text and dividers, and the two reds are
+   the accents — a dark base with a loud accent, the same structure the
+   reference site uses.
+
+   `--color-chrome-bright` is the one derived value: Chrome Silver lightened for
+   display headings, because #999999 as a 4rem headline reads muddy against
+   near-black. It is a tint of an existing brand colour, not a fifth colour, and
+   it is defined here so the whole site can be re-tuned from one line.
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-nexgen: #d93220;
+  --color-ember: #eb4f2f;
+  --color-chrome: #999999;
+  --color-ink: #080808;
+
+  --color-chrome-bright: color-mix(in oklab, var(--color-chrome) 45%, white);
+  --color-chrome-dim: color-mix(in oklab, var(--color-chrome) 55%, var(--color-ink));
+  --color-surface: color-mix(in oklab, var(--color-ink) 92%, var(--color-chrome));
+  --color-surface-raised: color-mix(in oklab, var(--color-ink) 85%, var(--color-chrome));
+  --color-hairline: color-mix(in oklab, var(--color-chrome) 22%, transparent);
+
+  --font-display: var(--font-display-face), 'Arial Narrow', 'Haettenschweiler', sans-serif;
+  --font-body: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale, echoing the reference site's ratios. Desktop values; the
+     mobile step-downs live in the base layer below. */
+  --text-display: 5.25rem;
+  --text-h1: 3.875rem;
+  --text-h2: 2.625rem;
+  --text-h3: 2.375rem;
+  --text-h4: 1.625rem;
+  --text-h5: 1.25rem;
+  --text-body-lg: 1.25rem;
+  --text-body: 1.125rem;
+  --text-small: 0.875rem;
+
+  /* Hard, near-square corners, as on the reference. */
+  --radius-card: 2px;
+  --radius-image: 2px;
+
+  /* The size of the 45° corner cut taken from the logo's chamfered terminals.
+     Used by the .chamfer utilities so the whole interface shares the mark's
+     one distinguishing geometric move. */
+  --chamfer: 14px;
+  --chamfer-sm: 8px;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ─────────────────────────────── base ─────────────────────────────────── */
+@layer base {
+  :root {
+    --nav-height: 5.25rem;
+    --announcement-height: 0rem;
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: var(--color-ink);
+    /* Anchor links and in-page navigation should not slide under the fixed bar. */
+    scroll-padding-top: var(--nav-height);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-chrome);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  /* Headings take their cue from the logo: wide, geometric, uppercase, with the
+     slight positive tracking the mark's own letterspacing implies. Oxanium's
+     heaviest weight keeps the poster-scale impact of the reference site. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.04;
+    text-transform: uppercase;
+    letter-spacing: 0.012em;
+    color: var(--color-chrome-bright);
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+  }
+  h2 {
+    font-size: var(--text-h2);
+  }
+  h3 {
+    font-size: var(--text-h3);
+  }
+  h4 {
+    font-size: var(--text-h4);
+  }
+  h5 {
+    font-size: var(--text-h5);
+  }
+
+  @media (max-width: 900px) {
+    :root {
+      --text-display: 3.25rem;
+      --text-h1: 2.75rem;
+      --text-h2: 2rem;
+      --text-h3: 1.75rem;
+      --text-h4: 1.4rem;
+      --text-body-lg: 1.125rem;
+      --text-body: 1rem;
+      --nav-height: 4.25rem;
+    }
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Visible, on-brand focus ring for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--color-ember);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-nexgen);
+    color: var(--color-chrome-bright);
+  }
+
+  img,
+  video {
+    display: block;
+    max-width: 100%;
+  }
+}
+
+/* ───────────────────────────── components ─────────────────────────────── */
+@layer components {
+  /* Page gutter, consistent across every section on every page. */
+  .container-site {
+    width: 100%;
+    max-width: 100rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 4rem);
+  }
+
+  .section-pad {
+    padding-block: clamp(4rem, 9vw, 9rem);
+  }
+
+  /**
+   * The logo's signature move, made reusable: a 45° cut across two opposite
+   * corners. Applied to buttons, cards and image frames so the interface is
+   * built from the same geometry as the mark rather than merely sitting next to
+   * it.
+   *
+   * `clip-path` rather than a border trick, so it works over photography and
+   * needs no extra element.
+   */
+  .chamfer {
+    clip-path: polygon(
+      var(--chamfer) 0,
+      100% 0,
+      100% calc(100% - var(--chamfer)),
+      calc(100% - var(--chamfer)) 100%,
+      0 100%,
+      0 var(--chamfer)
+    );
+  }
+
+  .chamfer-sm {
+    clip-path: polygon(
+      var(--chamfer-sm) 0,
+      100% 0,
+      100% calc(100% - var(--chamfer-sm)),
+      calc(100% - var(--chamfer-sm)) 100%,
+      0 100%,
+      0 var(--chamfer-sm)
+    );
+  }
+
+  /* Single corner cut, for panels that sit against a page edge. */
+  .chamfer-tr {
+    clip-path: polygon(0 0, calc(100% - var(--chamfer)) 0, 100% var(--chamfer), 100% 100%, 0 100%);
+  }
+
+  /* Small uppercase label used above headings site-wide. */
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: var(--text-small);
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-nexgen);
+  }
+
+  .display-heading {
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: 0.008em;
+    text-transform: uppercase;
+    color: var(--color-chrome-bright);
+  }
+
+  /* Type filled with the painted texture from the logo artwork. Used sparingly —
+     the hero headline and the 404 — as the loudest expression of the brand. */
+  .textured-type {
+    background-image: url('/brand/logo-texture.webp');
+    background-size: cover;
+    background-position: center;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* A large, faint wordmark used as a background watermark. */
+  .logo-watermark {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.05;
+    color: var(--color-chrome);
+  }
+
+  .prose-nexgen {
+    color: var(--color-chrome);
+    font-size: var(--text-body);
+    line-height: 1.7;
+  }
+
+  .prose-nexgen > * + * {
+    margin-top: 1.1em;
+  }
+
+  .prose-nexgen h2,
+  .prose-nexgen h3,
+  .prose-nexgen h4 {
+    margin-top: 2em;
+    margin-bottom: 0.6em;
+  }
+
+  .prose-nexgen a {
+    color: var(--color-ember);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .prose-nexgen ul,
+  .prose-nexgen ol {
+    padding-left: 1.4em;
+    list-style: disc;
+  }
+
+  .prose-nexgen ol {
+    list-style: decimal;
+  }
+
+  .prose-nexgen li + li {
+    margin-top: 0.4em;
+  }
+
+  .prose-nexgen blockquote {
+    border-left: 3px solid var(--color-nexgen);
+    padding-left: 1.25rem;
+    font-family: var(--font-display);
+    font-size: var(--text-h4);
+    line-height: 1.15;
+    text-transform: uppercase;
+    color: var(--color-chrome-bright);
+  }
+
+  .hairline {
+    border-color: var(--color-hairline);
+  }
+
+  /* Masked line wrapper used by the split-text heading reveals. */
+  .line-mask {
+    overflow: hidden;
+    display: block;
+  }
+}
+
+/* ─────────────────────────────── utilities ───────────────────────────────── */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .grain {
+    position: relative;
+  }
+
+  /* A faint film grain over dark photography, so large flat blacks do not band. */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+}
+
+/* Respect the OS "reduce motion" setting: transitions collapse, and the
+   scroll-driven timelines are set to their end state in JS rather than being
+   left half-played. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
