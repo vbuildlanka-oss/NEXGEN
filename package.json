@@ -17,8 +17,9 @@
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
     "seed": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" tsx scripts/seed.ts",
     "assets:process": "node scripts/process-assets.mjs",
-    "verify": "pnpm lint && pnpm build && ./scripts/smoke-test.sh",
-    "check:mobile": "node scripts/mobile-check.mjs"
+    "verify": "pnpm check:deploy && pnpm lint && pnpm build && ./scripts/smoke-test.sh",
+    "check:mobile": "node scripts/mobile-check.mjs",
+    "check:deploy": "node scripts/check-vercelignore.mjs"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.89.0",
@@ -52,8 +53,8 @@
     "ws": "^8.21.3"
   },
   "engines": {
-    "node": "^18.20.2 || >=20.9.0",
-    "pnpm": "^9 || ^10 || ^11"
+    "node": "22.x",
+    "pnpm": ">=10"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -61,5 +62,6 @@
       "esbuild",
       "unrs-resolver"
     ]
-  }
+  },
+  "packageManager": "pnpm@10.28.1"
 }
