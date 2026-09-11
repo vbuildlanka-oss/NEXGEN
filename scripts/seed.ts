@@ -18,6 +18,7 @@
 import 'dotenv/config'
 
 import { existsSync } from 'node:fs'
+import { readdir, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getPayload } from 'payload'
@@ -113,7 +114,15 @@ async function upsertMedia(
     },
   })
 
-  console.log(`  + media: ${filename}`)
+  if (created.filename && created.filename !== filename) {
+    console.warn(
+      `  ! "${filename}" was stored as "${created.filename}" — a file of that name ` +
+        'already existed. Clear public/media-uploads (or the R2 bucket) and re-run, ' +
+        'or the site will reference the wrong images.',
+    )
+  }
+
+  console.log(`  + media: ${created.filename ?? filename}`)
   return created.id as number
 }
 
@@ -368,6 +377,36 @@ const GALLERY: MediaSeed[] = [
 ]
 
 /* ─────────────────────────────── seeding ──────────────────────────────── */
+
+/**
+ * Guards against a subtle, silent failure mode.
+ *
+ * When a file already exists in the upload directory, Payload does not overwrite
+ * it — it renames the incoming one by incrementing a trailing number. Because
+ * these filenames *end* in numbers, "onedineth-img-11.webp" quietly becomes
+ * "onedineth-img-12.webp". The seed script then no longer recognises its own
+ * uploads on the next run and creates duplicates of everything.
+ *
+ * So: if the database has no media but the disk does, the two are out of step and
+ * the leftover files are cleared. Only ever touches the local development
+ * fallback directory — when R2 is configured there is nothing here to clean.
+ */
+async function ensureCleanUploadDir(payload: Payload) {
+  const existing = await payload.count({ collection: 'media', overrideAccess: true })
+  if (existing.totalDocs > 0) return
+
+  const uploadDir = path.join(root, 'public/media-uploads')
+  if (!existsSync(uploadDir)) return
+
+  const leftover = await readdir(uploadDir)
+  if (leftover.length === 0) return
+
+  console.log(
+    `  = clearing ${leftover.length} orphaned file(s) from public/media-uploads ` +
+      '(no media rows in the database, so these are from an earlier run)',
+  )
+  await rm(uploadDir, { recursive: true, force: true })
+}
 
 async function seedAdminUser(payload: Payload) {
   const existing = await payload.count({ collection: 'users', overrideAccess: true })
@@ -811,6 +850,7 @@ async function main() {
 
   console.log('\nSeeding NexGen content…\n')
 
+  await ensureCleanUploadDir(payload)
   await seedAdminUser(payload)
 
   console.log('Events…')

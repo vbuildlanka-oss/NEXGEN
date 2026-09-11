@@ -6,7 +6,18 @@ import { LOGO_PATHS, LOGO_VIEWBOX } from './logoPaths'
 type Variant = 'solid' | 'texture' | 'duotone'
 
 type Props = {
-  /** Rendered height. Width follows the mark's own 2:1 proportion. */
+  /**
+   * Sizes the mark. Applied to a wrapper, not to the `<svg>` itself: the svg is
+   * always `width: 100%` of its wrapper and derives its height from the mark's
+   * own ~2:1 proportion.
+   *
+   * Sizing the wrapper rather than merging a width class onto the svg is
+   * deliberate. Tailwind classes all carry the same specificity, so a `w-[9rem]`
+   * passed in here and the svg's own `w-full` would be resolved by their order in
+   * the generated stylesheet — not by the order they appear in the attribute.
+   * That made the header logo's size depend on build output. A wrapper removes
+   * the collision entirely.
+   */
   className?: string
   asLink?: boolean
   variant?: Variant
@@ -49,8 +60,7 @@ export const Wordmark: React.FC<Props> = ({
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={title}
-      className={`h-auto w-full ${className}`}
-      style={{ display: 'block' }}
+      className="block h-auto w-full"
     >
       {variant === 'texture' && (
         <defs>
@@ -99,13 +109,13 @@ export const Wordmark: React.FC<Props> = ({
     </svg>
   )
 
-  if (!asLink) return mark
+  if (!asLink) return <span className={`block ${className}`}>{mark}</span>
 
   return (
     <Link
       href="/"
       aria-label="NexGen — home"
-      className="inline-flex items-center transition-colors duration-200"
+      className={`block transition-colors duration-200 ${className}`}
     >
       {mark}
     </Link>

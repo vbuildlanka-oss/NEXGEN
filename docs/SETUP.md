@@ -211,3 +211,36 @@ node scripts/extract-logo.mjs # re-traces logo.jpeg into the SVG wordmark
   already exist so a Stripe checkout can be added later without a schema change.
 - Vercel's free tier is enough for launch. R2 egress is always free, so
   photography traffic will not generate a bill.
+
+
+---
+
+## 8. Verifying a build before you deploy
+
+```bash
+pnpm verify
+```
+
+That runs, in order: ESLint, a full production build, and an end-to-end smoke
+test against the built server. The smoke test boots the site and checks:
+
+- every route returns 200, and an unknown URL returns 404
+- the contact form rejects bad input, accepts good input, and absorbs bot
+  submissions via its honeypot
+- the cron endpoint refuses requests without its token
+- the preview route refuses requests without an admin session, and rejects
+  attempts to turn it into an open redirect
+- `robots.txt` and `sitemap.xml` respond, and the security headers are present
+- media files and the hero video serve, including ranged requests
+- the page copy is present in the raw HTML — so it is crawlable and readable
+  with JavaScript disabled
+- nothing renders at more than 390px wide on a phone, and no heading is clipped
+  or broken mid-word
+
+`pnpm check:mobile http://localhost:3000` runs just the mobile pass.
+
+One deliberate behaviour worth knowing: **a production build fails if the
+database is unreachable.** At runtime a database blip degrades gracefully and
+still serves a page, but at build time it aborts — otherwise a mistyped
+`DATABASE_URI` would quietly publish a live site with no events, no updates and
+an empty gallery.

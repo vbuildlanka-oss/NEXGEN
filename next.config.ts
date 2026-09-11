@@ -33,6 +33,34 @@ const nextConfig: NextConfig = {
     localPatterns: [{ pathname: '/api/media/file/**' }, { pathname: '/media-uploads/**' }],
     remotePatterns,
   },
+  // Vercel serves the site over HTTPS with HSTS already; these cover the rest of
+  // the low-cost, high-value headers.
+  //
+  // Note the deliberate absence of a Content-Security-Policy: the admin panel
+  // injects inline styles and the site inlines critical CSS, so a CSP needs a
+  // nonce pipeline to avoid breaking either. Worth adding, but it must be done
+  // properly rather than shipped half-configured.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Stops browsers guessing content types, which is how a stray upload
+          // becomes an XSS vector.
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // `SAMEORIGIN` rather than `DENY`: the admin panel's live preview loads
+          // the public site in an iframe on this same origin.
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), payment=()',
+          },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+        ],
+      },
+    ]
+  },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],

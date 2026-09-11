@@ -153,6 +153,22 @@ export async function getPastEvents({
   )
 }
 
+/**
+ * Whether an event has finished.
+ *
+ * Lives in the data layer rather than in a page component on purpose. Reading the
+ * clock while rendering makes a component's output depend on something outside
+ * its props, which breaks the guarantee that a prerendered page and a live
+ * re-render agree — React flags it, and rightly so. Deciding it here, alongside
+ * the query that loaded the event, keeps rendering a pure function of its data.
+ */
+export function isEventPast(event: Pick<Event, 'startsAt' | 'endsAt'>): boolean {
+  const finishes = event.endsAt ?? event.startsAt
+  if (!finishes) return false
+
+  return new Date(finishes).getTime() < Date.now()
+}
+
 export async function getEventBySlug(
   slug: string,
   { draft = false }: QueryOptions = {},

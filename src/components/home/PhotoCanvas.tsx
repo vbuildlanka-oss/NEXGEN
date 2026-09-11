@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 
+import { useIsomorphicLayoutEffect } from '@/hooks/useIsomorphicLayoutEffect'
 import { gsap, ScrollTrigger, SplitText, prefersReducedMotion } from '@/lib/gsap'
 import { asMedia, buildSrcSet, mediaAlt, pickSrc } from '@/lib/media'
 import type { HomePanel } from '@/payload-types'
@@ -44,7 +45,7 @@ const ACCENTS: Record<string, string> = {
 export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
   const sectionRef = useRef<HTMLElement | null>(null)
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const section = sectionRef.current
     if (!section || panels.length === 0) return
 
@@ -75,7 +76,6 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
       )
       const lines = splits.map((split) => split.lines)
 
-      headings.forEach((heading) => gsap.set(heading, { autoAlpha: 1 }))
 
       if (reduced) {
         // No scroll animation: show the first panel and leave it. The remaining
@@ -301,7 +301,6 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                     <h2
                       data-canvas-heading
                       className="text-[clamp(1.6rem,4.2vw,2.6rem)] leading-[1.04] text-ink"
-                      style={{ visibility: 'hidden' }}
                     >
                       {panel.heading}
                     </h2>

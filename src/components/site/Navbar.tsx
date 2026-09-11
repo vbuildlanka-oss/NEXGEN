@@ -31,15 +31,14 @@ export const Navbar: React.FC<Props> = ({
   const shouldReveal = revealOnScroll ?? pathname === '/'
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const [revealed, setRevealed] = useState(!shouldReveal)
+  // Tracks only the scroll position. Whether the bar is *visible* is derived
+  // below, so this never needs seeding from an effect.
+  const [scrolledPastHero, setScrolledPastHero] = useState(false)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
 
   /* ── reveal the bar as the hero shrinks ─────────────────────────────────── */
   useEffect(() => {
-    if (!shouldReveal) {
-      setRevealed(true)
-      return
-    }
+    if (!shouldReveal) return
 
     let frame = 0
 
@@ -47,7 +46,7 @@ export const Navbar: React.FC<Props> = ({
       frame = 0
       // Roughly a third of the way through the hero's scroll track, which is
       // when the video has visibly detached from the edges of the screen.
-      setRevealed(window.scrollY > window.innerHeight * 0.35)
+      setScrolledPastHero(window.scrollY > window.innerHeight * 0.35)
     }
 
     const onScroll = () => {
@@ -55,7 +54,12 @@ export const Navbar: React.FC<Props> = ({
       frame = requestAnimationFrame(measure)
     }
 
-    measure()
+    // Deferred to the next frame rather than called inline: the visitor may
+    // already be scrolled down (a refresh, or a restored scroll position), so an
+    // initial measurement is needed — but taking it synchronously here would
+    // trigger a second render pass on every mount.
+    frame = requestAnimationFrame(measure)
+
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll, { passive: true })
 
@@ -72,9 +76,10 @@ export const Navbar: React.FC<Props> = ({
     triggerRef.current?.focus()
   }, [])
 
-  // The bar must be present while the menu is open even if the page has not
-  // been scrolled, otherwise the close button would vanish with it.
-  const visible = revealed || menuOpen
+  // Derived, not stored: the bar shows unless this route hides it behind the
+  // hero, and it must be present while the menu is open even if the page has not
+  // been scrolled — otherwise the close button would vanish with it.
+  const visible = !shouldReveal || scrolledPastHero || menuOpen
 
   return (
     <>
@@ -122,7 +127,7 @@ export const Navbar: React.FC<Props> = ({
 
           {/* centre — wordmark and the standing tagline */}
           <div className="flex items-center gap-4">
-            <Wordmark className="w-[clamp(6.5rem,13vw,9rem)] text-chrome-bright" />
+            <Wordmark className="w-[calc(var(--nav-height)*0.86)] shrink-0 text-chrome-bright" />
             {tagline && (
               <span
                 className="hidden border-l border-hairline pl-4 text-small leading-tight text-chrome md:block"

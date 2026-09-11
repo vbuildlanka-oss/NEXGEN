@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 
 import { Wordmark } from '@/components/site/Wordmark'
+import { useIsomorphicLayoutEffect } from '@/hooks/useIsomorphicLayoutEffect'
 import { gsap, SplitText, prefersReducedMotion } from '@/lib/gsap'
 
 type Props = {
@@ -21,7 +22,7 @@ type Props = {
 export const PanelsIntro: React.FC<Props> = ({ eyebrow, statement }) => {
   const sectionRef = useRef<HTMLElement | null>(null)
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const section = sectionRef.current
     if (!section) return
 
@@ -30,10 +31,7 @@ export const PanelsIntro: React.FC<Props> = ({ eyebrow, statement }) => {
       const stage = section.querySelector<HTMLElement>('[data-intro-stage]')
       if (!target) return
 
-      const reduced = prefersReducedMotion()
-      gsap.set(target, { autoAlpha: 1 })
-
-      if (reduced) {
+      if (prefersReducedMotion()) {
         gsap.set(target, { color: 'var(--color-chrome-bright)' })
         return
       }
@@ -78,17 +76,16 @@ export const PanelsIntro: React.FC<Props> = ({ eyebrow, statement }) => {
         {/* The mark, oversized and almost invisible, anchoring the statement. */}
         <div
           aria-hidden
-          className="logo-watermark right-[-6%] bottom-[-8%] w-[min(70vw,55rem)]"
+          className="logo-watermark right-[-10%] bottom-[-14%] z-0 w-[min(58vw,42rem)]"
         >
           <Wordmark asLink={false} />
         </div>
 
-        <div className="container-site relative">
+        <div className="container-site relative z-10">
           {eyebrow && <p className="eyebrow mb-6">{eyebrow}</p>}
           <p
             data-intro-statement
             className="max-w-[46ch] font-display text-[clamp(1.9rem,5.2vw,4.25rem)] leading-[1.06] uppercase"
-            style={{ visibility: 'hidden' }}
           >
             {statement}
           </p>

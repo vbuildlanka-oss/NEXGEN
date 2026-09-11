@@ -28,10 +28,14 @@
   --font-display: var(--font-display-face), 'Arial Narrow', 'Haettenschweiler', sans-serif;
   --font-body: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
 
-  /* Type scale, echoing the reference site's ratios. Desktop values; the
-     mobile step-downs live in the base layer below. */
-  --text-display: 5.25rem;
-  --text-h1: 3.875rem;
+  /* Type scale, echoing the reference site's ratios.
+     The two largest steps are fluid rather than fixed-with-a-breakpoint: a single
+     long word set at a fixed size ("ENTERTAINMENT") is wider than a 390px screen,
+     and because the body clips horizontal overflow it would be silently cut off
+     rather than causing a visible scrollbar. Tying them to the viewport means
+     they cannot outgrow it at any width. */
+  --text-display: clamp(1.75rem, 8.6vw, 5.25rem);
+  --text-h1: clamp(1.75rem, 7.4vw, 3.875rem);
   --text-h2: 2.625rem;
   --text-h3: 2.375rem;
   --text-h4: 1.625rem;
@@ -94,6 +98,8 @@
     letter-spacing: 0.012em;
     color: var(--color-chrome-bright);
     text-wrap: balance;
+    /* Last-resort guard for long proper nouns and artist names. */
+    overflow-wrap: break-word;
   }
 
   h1 {
@@ -114,8 +120,6 @@
 
   @media (max-width: 900px) {
     :root {
-      --text-display: 3.25rem;
-      --text-h1: 2.75rem;
       --text-h2: 2rem;
       --text-h3: 1.75rem;
       --text-h4: 1.4rem;
@@ -233,7 +237,9 @@
   .logo-watermark {
     position: absolute;
     pointer-events: none;
-    opacity: 0.05;
+    /* Faint enough to read as texture rather than as a second headline
+       competing with the type in front of it. */
+    opacity: 0.035;
     color: var(--color-chrome);
   }
 

@@ -12,6 +12,13 @@ PGPORT="${PGPORT:-5432}"
 
 if ! (exec 3<>/dev/tcp/127.0.0.1/"$PGPORT") 2>/dev/null; then
   chmod 1777 /tmp 2>/dev/null || true
+
+  # Initialise the cluster on first use (or after the sandbox is rebuilt).
+  if [[ ! -f "$PGDATA/PG_VERSION" ]]; then
+    mkdir -p "$PGDATA"
+    chown -R postgres:postgres "$(dirname "$PGDATA")"
+    su postgres -c "initdb -D $PGDATA -U postgres --auth=trust"
+  fi
   # A stale postmaster.pid from a previous sandbox shell blocks a clean start.
   rm -f "$PGDATA/postmaster.pid"
   rm -f /var/run/postgresql/.s.PGSQL."$PGPORT".lock /var/run/postgresql/.s.PGSQL."$PGPORT"

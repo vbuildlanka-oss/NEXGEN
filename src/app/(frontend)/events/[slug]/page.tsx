@@ -17,7 +17,13 @@ import {
   formatPrice,
 } from '@/lib/format'
 import { asMedia, pickSrc } from '@/lib/media'
-import { getEventBySlug, getEventPhotos, getEventSlugs, getUpcomingEvents } from '@/lib/queries'
+import {
+  getEventBySlug,
+  getEventPhotos,
+  getEventSlugs,
+  getUpcomingEvents,
+  isEventPast,
+} from '@/lib/queries'
 
 export const revalidate = 3600
 
@@ -67,7 +73,7 @@ export default async function EventPage({ params }: Params) {
   const date = formatEventDate(event.startsAt)
   const time = formatEventTime(event.startsAt)
   const endTime = formatEventTime(event.endsAt)
-  const isPast = new Date(event.endsAt ?? event.startsAt).getTime() < Date.now()
+  const isPast = isEventPast(event)
 
   const others = upcoming.filter((other) => other.id !== event.id).slice(0, 3)
 

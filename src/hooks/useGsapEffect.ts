@@ -1,8 +1,9 @@
 'use client'
 
-import { useLayoutEffect, useRef, type DependencyList, type RefObject } from 'react'
+import { useRef, type DependencyList, type RefObject } from 'react'
 
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
+import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect'
 
 type SetupArgs = {
   /** The scoped root element. */
@@ -26,7 +27,7 @@ export function useGsapEffect<T extends HTMLElement = HTMLDivElement>(
 ): RefObject<T | null> {
   const ref = useRef<T | null>(null)
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const root = ref.current
     if (!root) return
 
@@ -34,9 +35,8 @@ export function useGsapEffect<T extends HTMLElement = HTMLDivElement>(
     const ctx = gsap.context(() => setup({ root, reduced }), root)
 
     return () => ctx.revert()
-    // The setup closure is intentionally not a dependency: callers pass an
-    // inline function, which would re-run the effect on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // The setup closure is intentionally excluded from the dependencies: callers
+    // pass an inline function, which would re-run the effect on every render.
   }, deps)
 
   return ref
