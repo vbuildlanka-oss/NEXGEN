@@ -56,6 +56,9 @@ importers:
       sharp:
         specifier: 0.34.2
         version: 0.34.2
+      tsx:
+        specifier: 4.22.4
+        version: 4.22.4
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4.1.14
@@ -81,9 +84,6 @@ importers:
       tailwindcss:
         specifier: ^4.1.14
         version: 4.3.3
-      tsx:
-        specifier: 4.22.4
-        version: 4.22.4
       typescript:
         specifier: 5.7.3
         version: 5.7.3
