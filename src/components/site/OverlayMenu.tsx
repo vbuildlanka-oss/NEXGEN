@@ -6,7 +6,6 @@ import React, { useCallback, useEffect, useRef } from 'react'
 
 import { getLenis } from '@/components/motion/SmoothScroll'
 import { SOCIAL_LABELS, type NavLink, type SocialLink } from './types'
-import { Wordmark } from './Wordmark'
 
 type Props = {
   open: boolean
@@ -118,7 +117,7 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
       aria-label="Site menu"
       // Hidden from assistive tech and from the tab order while closed.
       {...(!open ? { inert: true } : {})}
-      className={`fixed inset-0 z-100 flex h-[100svh] w-full flex-col justify-between overflow-x-hidden overflow-y-auto bg-ink px-[clamp(1.25rem,5vw,5rem)] pt-[clamp(4.5rem,9vh,7rem)] pb-[clamp(2rem,6vh,4rem)] transition-[transform,opacity] duration-500 ease-[var(--ease-out-quint)] md:w-[min(34rem,90vw)] md:border-r-2 md:border-hairline ${
+      className={`fixed inset-0 z-100 flex h-[100svh] w-full flex-col overflow-x-hidden overflow-y-auto bg-ink px-[clamp(1.25rem,5vw,5rem)] pt-[calc(var(--nav-height)+clamp(1.5rem,4vh,2.5rem))] pb-[clamp(2rem,6vh,4rem)] transition-[transform,opacity] duration-500 ease-[var(--ease-out-quint)] md:w-[min(34rem,90vw)] md:border-r-2 md:border-hairline ${
         open ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-full opacity-0'
       }`}
     >
@@ -133,10 +132,6 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
         className="pointer-events-none absolute right-[-3rem] bottom-[18%] h-40 w-40 bg-ember opacity-70"
         style={{ clipPath: 'polygon(14% 0, 100% 8%, 86% 100%, 0 78%)' }}
       />
-
-      <div className="relative mb-6 w-[min(44vw,10.5rem)]">
-        <Wordmark asLink={false} variant="duotone" title="NexGen" />
-      </div>
 
       <nav aria-label="Main" className="relative">
         <ul className="flex flex-col gap-2">
