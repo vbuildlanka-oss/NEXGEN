@@ -29,9 +29,10 @@ const ACCENTS: Record<string, string> = {
  *   • Two stacked layers inside it — every background photo absolutely
  *     positioned on top of one another, and every foreground photo plus heading
  *     likewise.
- *   • One invisible, viewport-tall trigger element per panel. Each has its own
- *     ScrollTrigger firing `onEnter` / `onLeaveBack`, and each of those builds a
- *     timeline that moves the outgoing and incoming panel at the same time.
+ *   • One scrubbed timeline across the whole section, giving each panel an equal
+ *     segment of the scroll distance. The reference uses a separate trigger and a
+ *     fixed-duration timeline per panel; that snapped when scrolled quickly, so
+ *     this tracks scroll position directly instead.
  *   • The panel change is a vertical reel wipe, not a cross-fade: the incoming
  *     background travels `y: 110% → 0%` while its width goes `80% → 100%`, so it
  *     appears to widen into place as it arrives. The foreground photo scales up
@@ -40,7 +41,7 @@ const ACCENTS: Record<string, string> = {
  *
  * The scroll length is `panels.length × 100svh`, so adding an eighth panel in the
  * admin panel lengthens the section automatically — nothing here is hard-coded
- * to seven.
+ * to seven, including the timeline, which is built from the panel count.
  */
 export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
   const sectionRef = useRef<HTMLElement | null>(null)
@@ -54,7 +55,6 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
       const foregrounds = gsap.utils.toArray<HTMLElement>('[data-canvas-fg]', section)
       const headings = gsap.utils.toArray<HTMLElement>('[data-canvas-heading]', section)
       const blocks = gsap.utils.toArray<HTMLElement>('[data-canvas-block]', section)
-      const triggers = gsap.utils.toArray<HTMLElement>('[data-canvas-trigger]', section)
       const progress = section.querySelector<HTMLElement>('[data-canvas-progress]')
 
       if (backgrounds.length === 0) return
@@ -112,51 +112,89 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
         .fromTo(backgrounds[0], { yPercent: 8, autoAlpha: 0.25 }, { yPercent: 0, autoAlpha: 1 }, 0)
         .fromTo(foregrounds[0], { scale: 0.4, autoAlpha: 0 }, { scale: 1, autoAlpha: 1 }, 0)
 
-      /* ── one trigger per panel ─────────────────────────────────────────── */
-      const move = (outgoing: number, incoming: number, direction: 1 | -1) => {
-        const timeline = gsap.timeline({ defaults: { ease: 'power2.inOut' } })
+      /* ── one scrubbed timeline across the whole section ────────────────── */
+      /**
+       * Previously each panel had its own ScrollTrigger firing a fixed 0.6s
+       * timeline on entry. That plays at its own pace regardless of how fast you
+       * are scrolling, so a flick of the wheel left the animation catching up and
+       * the section felt like it was snapping between states.
+       *
+       * Now there is a single timeline scrubbed against scroll position, so the
+       * panels track the scroll exactly — scroll slowly and they move slowly;
+       * stop halfway and they stay halfway. `scrub: 1` adds a one-second catch-up
+       * so the motion glides rather than tracking the wheel one-to-one.
+       *
+       * Each panel gets a segment one unit long: it holds still for the first
+       * part, then hands over to the next panel. The hold is what stops the
+       * section feeling like a continuous blur.
+       */
+      const HOLD = 0.55
+      const MOVE = 0.45
 
-        timeline
-          // Outgoing panel leaves in the direction of travel and narrows again.
-          .to(
-            backgrounds[outgoing],
-            { yPercent: -110 * direction, width: restingWidth, duration: 0.6 },
-            0,
-          )
-          .to(foregrounds[outgoing], { scale: 0, autoAlpha: 0, duration: 0.6 }, 0)
-          .to(lines[outgoing], { yPercent: -100 * direction, autoAlpha: 0, duration: 0.4 }, 0)
-          // Incoming panel arrives from the opposite edge, widening as it lands.
-          .fromTo(
-            backgrounds[incoming],
-            { yPercent: 110 * direction },
-            { yPercent: 0, width: '100%', duration: 0.6 },
-            0,
-          )
-          .to(foregrounds[incoming], { scale: 1, autoAlpha: 1, duration: 0.6 }, 0)
-          .fromTo(
-            lines[incoming],
-            { yPercent: 100 * direction },
-            { yPercent: 0, autoAlpha: 1, duration: 0.4 },
-            0,
-          )
-          .set(foregrounds[outgoing], { pointerEvents: 'none' }, 0)
-          .set(foregrounds[incoming], { pointerEvents: 'auto' }, 0)
+      const master = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1,
+        },
+      })
 
-        return timeline
-      }
-
-      triggers.forEach((trigger, index) => {
-        // Panel 0 is the initial state; its trigger sits at the very top of the
-        // track and would fire before the section is even pinned.
+      panels.forEach((_, index) => {
         if (index === 0) return
 
-        ScrollTrigger.create({
-          trigger,
-          start: 'top 30%',
-          end: 'top top',
-          onEnter: () => move(index - 1, index, 1),
-          onLeaveBack: () => move(index, index - 1, -1),
-        })
+        const at = index - 1 + HOLD
+        const outgoing = index - 1
+
+        master
+          // Outgoing panel leaves upward and narrows again.
+          .to(
+            backgrounds[outgoing],
+            { yPercent: -110, width: restingWidth, duration: MOVE },
+            at,
+          )
+          .to(foregrounds[outgoing], { scale: 0, autoAlpha: 0, duration: MOVE }, at)
+          .to(lines[outgoing], { yPercent: -100, autoAlpha: 0, duration: MOVE * 0.8 }, at)
+          // Incoming panel arrives from below, widening as it lands.
+          .fromTo(
+            backgrounds[index],
+            { yPercent: 110, width: restingWidth },
+            { yPercent: 0, width: '100%', duration: MOVE },
+            at,
+          )
+          .fromTo(
+            foregrounds[index],
+            { scale: 0, autoAlpha: 0 },
+            { scale: 1, autoAlpha: 1, duration: MOVE },
+            at,
+          )
+          .fromTo(
+            lines[index],
+            { yPercent: 100, autoAlpha: 0 },
+            { yPercent: 0, autoAlpha: 1, duration: MOVE * 0.8 },
+            at + MOVE * 0.2,
+          )
+      })
+
+      /**
+       * Only the panel currently on screen should be clickable, and that cannot
+       * come from the timeline — a scrubbed tween has no notion of "arrived".
+       */
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top top',
+        end: 'bottom bottom',
+        onUpdate: (self) => {
+          const active = Math.min(
+            panels.length - 1,
+            Math.round(self.progress * (panels.length - 1)),
+          )
+
+          foregrounds.forEach((foreground, index) => {
+            foreground.style.pointerEvents = index === active ? 'auto' : 'none'
+          })
+        },
       })
 
       /* ── progress bar ──────────────────────────────────────────────────── */
@@ -228,15 +266,25 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                     loading={index < 2 ? 'eager' : 'lazy'}
                     fetchPriority={index === 0 ? 'high' : 'auto'}
                     className="h-full w-full object-cover"
+                    /* A touch more contrast and light, so the stage detail in
+                       these very dark frames survives being a background. */
+                    style={{ filter: 'brightness(1.18) contrast(1.06)' }}
                   />
                 )}
                 {/* Darkens the canvas so the foreground photo and heading hold. */}
+                {/* Legibility scrim. Kept deliberately light: the client's
+                    photography is already low-key nightclub imagery, and the
+                    original three-stop gradient (55%/25%/80% ink) crushed it to
+                    the point the background was barely visible. Now it only
+                    darkens the very top and bottom, where the progress bar and
+                    the heading block sit, and leaves the middle of the frame
+                    alone. */}
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0"
                   style={{
                     background:
-                      'linear-gradient(to bottom, color-mix(in oklab, var(--color-ink) 55%, transparent), color-mix(in oklab, var(--color-ink) 25%, transparent) 40%, color-mix(in oklab, var(--color-ink) 80%, transparent))',
+                      'linear-gradient(to bottom, color-mix(in oklab, var(--color-ink) 30%, transparent) 0%, transparent 22%, transparent 62%, color-mix(in oklab, var(--color-ink) 55%, transparent) 100%)',
                   }}
                 />
               </div>
@@ -334,12 +382,6 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
         </div>
       </div>
 
-      {/* One viewport-tall trigger per panel, aligned to the top of the track. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-full">
-        {panels.map((panel) => (
-          <div key={`trigger-${panel.id}`} data-canvas-trigger className="h-[100svh] w-full" />
-        ))}
-      </div>
     </section>
   )
 }

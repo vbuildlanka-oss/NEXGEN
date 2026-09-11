@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React, { useCallback, useEffect, useRef } from 'react'
 
-import { gsap, prefersReducedMotion } from '@/lib/gsap'
+import { getLenis } from '@/components/motion/SmoothScroll'
 import { SOCIAL_LABELS, type NavLink, type SocialLink } from './types'
 import { Wordmark } from './Wordmark'
 
@@ -20,63 +20,22 @@ type Props = {
  * covering the viewport from the left, oversized navigation type, and graphic
  * colour blocks bleeding off the edges.
  *
- * Handles the accessibility work a menu like this needs: focus moves into the
- * panel on open and back to the trigger on close, Tab is trapped inside while it
- * is open, Escape closes it, and the page behind it cannot scroll.
+ * Opening and closing is pure CSS, driven by the `open` prop.
+ *
+ * It used to be a GSAP timeline, and that was a mistake. The panel's visibility
+ * depended on JavaScript completing an animation, so when the timeline stalled
+ * — a throttled requestAnimationFrame in a backgrounded tab is enough — the menu
+ * was left translated off-screen with its links at zero opacity. Reported as "the
+ * menu doesn't show the pages", and it was: the links existed, correctly, 800px
+ * to the left of the viewport.
+ *
+ * A CSS transition cannot get stuck half-played, and if it is never applied at all
+ * the menu is simply open with no animation. Navigation is too important to hang
+ * off an animation library.
  */
 export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials }) => {
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const timelineRef = useRef<gsap.core.Timeline | null>(null)
   const pathname = usePathname()
-
-  /* ── open / close animation ─────────────────────────────────────────────── */
-  useEffect(() => {
-    const panel = panelRef.current
-    if (!panel) return
-
-    const reduced = prefersReducedMotion()
-    timelineRef.current?.kill()
-
-    if (open) {
-      const links = panel.querySelectorAll('[data-menu-link]')
-      const extras = panel.querySelectorAll('[data-menu-extra]')
-
-      if (reduced) {
-        gsap.set(panel, { xPercent: 0, autoAlpha: 1 })
-        gsap.set([links, extras], { autoAlpha: 1, y: 0 })
-        return
-      }
-
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-      tl.set(panel, { autoAlpha: 1 })
-        .fromTo(panel, { xPercent: -100 }, { xPercent: 0, duration: 0.55 })
-        .fromTo(
-          links,
-          { autoAlpha: 0, y: 26 },
-          { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.05 },
-          '-=0.25',
-        )
-        .fromTo(extras, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4 }, '-=0.2')
-
-      timelineRef.current = tl
-    } else {
-      if (reduced) {
-        gsap.set(panel, { xPercent: -100, autoAlpha: 0 })
-        return
-      }
-
-      const tl = gsap.timeline()
-      tl.to(panel, { xPercent: -100, duration: 0.4, ease: 'power3.inOut' }).set(panel, {
-        autoAlpha: 0,
-      })
-
-      timelineRef.current = tl
-    }
-
-    return () => {
-      timelineRef.current?.kill()
-    }
-  }, [open])
 
   /* ── scroll lock ────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -89,9 +48,15 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
     document.body.style.overflow = 'hidden'
     if (scrollbar > 0) document.body.style.paddingRight = `${scrollbar}px`
 
+    // `overflow: hidden` alone does not stop momentum scrolling — Lenis keeps its
+    // own scroll position and would carry on behind the open menu.
+    const lenis = getLenis()
+    lenis?.stop()
+
     return () => {
       document.body.style.overflow = overflow
       document.body.style.paddingRight = paddingRight
+      lenis?.start()
     }
   }, [open])
 
@@ -151,10 +116,11 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
       role="dialog"
       aria-modal="true"
       aria-label="Site menu"
-      // Hidden from assistive tech and from tab order while closed.
-      {...(!open ? { inert: '' as unknown as boolean } : {})}
-      className="fixed inset-0 z-100 flex h-[100svh] w-full flex-col justify-between overflow-y-auto bg-ink px-[clamp(1.25rem,5vw,5rem)] pt-[clamp(4.5rem,9vh,7rem)] pb-[clamp(2rem,6vh,4rem)] opacity-0 md:w-[min(34rem,90vw)] md:border-r-2 md:border-hairline"
-      style={{ transform: 'translateX(-100%)' }}
+      // Hidden from assistive tech and from the tab order while closed.
+      {...(!open ? { inert: true } : {})}
+      className={`fixed inset-0 z-100 flex h-[100svh] w-full flex-col justify-between overflow-x-hidden overflow-y-auto bg-ink px-[clamp(1.25rem,5vw,5rem)] pt-[clamp(4.5rem,9vh,7rem)] pb-[clamp(2rem,6vh,4rem)] transition-[transform,opacity] duration-500 ease-[var(--ease-out-quint)] md:w-[min(34rem,90vw)] md:border-r-2 md:border-hairline ${
+        open ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-full opacity-0'
+      }`}
     >
       {/* Decorative colour blocks, echoing the graphic panels in the reference menu. */}
       <div
@@ -168,13 +134,13 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
         style={{ clipPath: 'polygon(14% 0, 100% 8%, 86% 100%, 0 78%)' }}
       />
 
-      <div data-menu-extra className="relative mb-10 w-[min(48vw,12rem)]">
+      <div className="relative mb-6 w-[min(44vw,10.5rem)]">
         <Wordmark asLink={false} variant="duotone" title="NexGen" />
       </div>
 
       <nav aria-label="Main" className="relative">
         <ul className="flex flex-col gap-1">
-          {navItems.map((item) => {
+          {navItems.map((item, index) => {
             const active = pathname === item.url
 
             return (
@@ -184,9 +150,12 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
                   href={item.url}
                   onClick={onClose}
                   aria-current={active ? 'page' : undefined}
-                  className={`group flex items-baseline gap-3 py-1.5 font-display text-[clamp(2rem,7vw,3.25rem)] uppercase leading-[1.02] transition-colors duration-200 ${
-                    active ? 'text-nexgen' : 'text-chrome-bright hover:text-ember'
-                  }`}
+                  /* Each link eases in slightly after the one above it. A CSS
+                     delay, so a stalled frame cannot leave a link invisible. */
+                  style={{ transitionDelay: open ? `${120 + index * 45}ms` : '0ms' }}
+                  className={`group flex items-baseline gap-3 py-1.5 font-display text-[clamp(2rem,7vw,3.25rem)] uppercase leading-[1.02] transition-[opacity,transform,color] duration-400 ${
+                    open ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
+                  } ${active ? 'text-nexgen' : 'text-chrome-bright hover:text-ember'}`}
                 >
                   <span
                     aria-hidden
@@ -200,7 +169,12 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
         </ul>
       </nav>
 
-      <div data-menu-extra className="relative mt-10 flex flex-col gap-6">
+      <div
+        className={`relative mt-10 flex flex-col gap-6 transition-opacity duration-500 ${
+          open ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ transitionDelay: open ? '320ms' : '0ms' }}
+      >
         {socials.length > 0 && (
           <div>
             <p className="eyebrow mb-3">Follow NexGen</p>

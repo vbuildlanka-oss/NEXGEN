@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import React from 'react'
 
+import { Parallax } from '@/components/motion/Parallax'
 import { Reveal } from '@/components/motion/Reveal'
 import { SplitHeading } from '@/components/motion/SplitHeading'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -64,12 +65,14 @@ export default async function OurStoryPage() {
               >
                 {section.image && imageFirst && (
                   <Reveal className="lg:order-first">
-                    <ResponsiveImage
-                      media={section.image}
-                      sizes="(max-width: 1024px) 92vw, 46vw"
-                      className="w-full object-cover"
-                      alt=""
-                    />
+                    <Parallax distance={9}>
+                      <ResponsiveImage
+                        media={section.image}
+                        sizes="(max-width: 1024px) 92vw, 46vw"
+                        className="w-full object-cover"
+                        alt=""
+                      />
+                    </Parallax>
                   </Reveal>
                 )}
 
@@ -99,12 +102,14 @@ export default async function OurStoryPage() {
 
                 {section.image && !imageFirst && (
                   <Reveal>
-                    <ResponsiveImage
-                      media={section.image}
-                      sizes="(max-width: 1024px) 92vw, 46vw"
-                      className="w-full object-cover"
-                      alt=""
-                    />
+                    <Parallax distance={9}>
+                      <ResponsiveImage
+                        media={section.image}
+                        sizes="(max-width: 1024px) 92vw, 46vw"
+                        className="w-full object-cover"
+                        alt=""
+                      />
+                    </Parallax>
                   </Reveal>
                 )}
               </div>
