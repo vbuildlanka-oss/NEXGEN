@@ -44,6 +44,17 @@ async function main() {
     result.warnings.forEach((warning) => console.warn(`  • ${warning}`))
   }
 
+  /**
+   * Close the connection pool before exiting.
+   *
+   * Seeding runs immediately before the build, which then needs connections of its
+   * own. Supabase's session pooler allows 15 clients and reaps abandoned ones only
+   * after a delay, so exiting without closing left the build competing with this
+   * script's discarded connections — which is how a build failed with
+   * "max clients reached in session mode".
+   */
+  await payload.destroy()
+
   process.exit(0)
 }
 
