@@ -87,12 +87,34 @@ async function main() {
 
   await mkdir(SHOTS, { recursive: true })
 
-  const pages = ['/', '/events', '/gallery', '/contact', '/our-story', '/updates']
+  const pages = [
+    '/',
+    '/events',
+    '/events/ember-nights',
+    '/gallery',
+    '/contact',
+    '/our-story',
+    '/updates',
+    '/updates/next-run-of-nights',
+  ]
   let failures = 0
 
   for (const page of pages) {
     await send('Page.navigate', { url: `${BASE}${page}` }, session)
     await sleep(2500)
+
+    // Scroll through the page as a visitor would: elements revealed or pinned
+    // further down can overflow even when the initial viewport is clean.
+    for (let i = 0; i < 4; i += 1) {
+      await send(
+        'Runtime.evaluate',
+        { expression: 'window.scrollBy(0, window.innerHeight * 0.9)' },
+        session,
+      )
+      await sleep(500)
+    }
+    await send('Runtime.evaluate', { expression: 'window.scrollTo(0, 0)' }, session)
+    await sleep(600)
 
     const { result: viewport } = await send(
       'Runtime.evaluate',

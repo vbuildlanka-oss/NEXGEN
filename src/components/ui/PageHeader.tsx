@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
+import { Parallax } from '@/components/motion/Parallax'
 import { SplitHeading } from '@/components/motion/SplitHeading'
 import type { MediaLike } from '@/lib/media'
 
@@ -30,14 +31,18 @@ export const PageHeader: React.FC<Props> = ({
   <header className="relative grain overflow-hidden border-b border-hairline">
     {image && (
       <>
-        <ResponsiveImage
-          media={image}
-          sizes="100vw"
-          priority
-          reserveSpace={false}
-          className="absolute inset-0 h-full w-full object-cover"
-          alt=""
-        />
+        {/* The backdrop drifts as the header scrolls away, which is what stops an
+            interior page opening as a flat static image. */}
+        <Parallax className="absolute inset-0" distance={16}>
+          <ResponsiveImage
+            media={image}
+            sizes="100vw"
+            priority
+            reserveSpace={false}
+            className="h-full w-full object-cover"
+            alt=""
+          />
+        </Parallax>
         <div
           aria-hidden
           className="absolute inset-0"

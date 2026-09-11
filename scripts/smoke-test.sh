@@ -74,7 +74,7 @@ curl -s -o /dev/null -w '%{http_code}  %{size_download} bytes  hero poster\n' "$
 echo
 echo "=== rendered markup checks ==="
 HOME_HTML=$(curl -s "$BASE/")
-for needle in 'NexGen' 'hero.mp4' 'data-canvas-trigger' 'Upcoming events' 'Ember Nights'; do
+for needle in 'NexGen' 'hero.mp4' 'data-canvas-bg' 'Upcoming events' 'Ember Nights'; do
   if grep -q -- "$needle" <<< "$HOME_HTML"; then echo "  found: $needle"; else echo "  MISSING: $needle"; fi
 done
 printf '  poster painted as the video background (no-preloader technique): '
@@ -99,7 +99,7 @@ for i in 01 02 03 04 05 06 07 08 09 10 11 12 13; do
 done
 
 echo "  homepage DOM:"
-agent-browser eval "document.querySelectorAll('[data-canvas-trigger]').length + ' canvas triggers / ' + document.querySelectorAll('[data-canvas-bg]').length + ' backgrounds / video:' + !!document.querySelector('video') + ' / navbar:' + !!document.querySelector('[data-navbar]')"
+agent-browser eval "document.querySelectorAll('[data-canvas-bg]').length + ' canvas panels / video:' + !!document.querySelector('video') + ' / navbar:' + !!document.querySelector('[data-navbar]') + ' / smooth-scroll:' + document.documentElement.classList.contains('lenis')"
 
 for page in events gallery our-story contact updates; do
   agent-browser open "$BASE/$page" >/dev/null 2>&1

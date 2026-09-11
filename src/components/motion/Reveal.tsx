@@ -42,13 +42,18 @@ export const Reveal: React.FC<Props> = ({
       {
         opacity: 1,
         y: 0,
-        duration: 0.85,
+        duration: 1,
         delay,
-        ease: 'power2.out',
-        stagger: stagger ? 0.1 : 0,
+        // Matches the easing curve used by the site's CSS transitions, so
+        // JavaScript-driven and CSS-driven motion feel like the same system.
+        ease: 'power3.out',
+        stagger: stagger ? 0.09 : 0,
         scrollTrigger: {
           trigger: root,
-          start: 'top 88%',
+          // Slightly later than before: with momentum scrolling the viewport
+          // arrives faster, and firing at 88% meant the animation was often
+          // already finished by the time the element was properly in view.
+          start: 'top 90%',
           once: true,
         },
       },

@@ -3,6 +3,7 @@ import { Golos_Text, Oxanium } from 'next/font/google'
 import React from 'react'
 
 import { LivePreviewRefresh } from '@/components/LivePreviewRefresh'
+import { SmoothScroll } from '@/components/motion/SmoothScroll'
 import { AnnouncementBar } from '@/components/site/AnnouncementBar'
 import { Footer } from '@/components/site/Footer'
 import { Navbar } from '@/components/site/Navbar'
@@ -106,6 +107,8 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   return (
     <html lang="en" className={`${displayFace.variable} ${bodyFace.variable}`}>
       <body>
+        <SmoothScroll />
+
         {announcement?.enabled && (
           <AnnouncementBar
             text={announcement.text}
