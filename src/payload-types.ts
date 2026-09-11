@@ -1253,6 +1253,10 @@ export interface SiteSetting {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Optional small text shown in the header, to the left of the button — for example the next event and city. Leave empty to show only the NexGen logo. Use " / " to split it across two lines.
+   */
+  headerTagline?: string | null;
   headerCta?: {
     label?: string | null;
     url?: string | null;
@@ -1423,6 +1427,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  headerTagline?: T;
   headerCta?:
     | T
     | {

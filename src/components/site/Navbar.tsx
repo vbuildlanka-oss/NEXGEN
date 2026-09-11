@@ -18,7 +18,7 @@ type Props = ChromeData & {
   revealOnScroll?: boolean
 }
 
-export const Navbar: React.FC<Props> = ({ navItems, cta, socials, revealOnScroll }) => {
+export const Navbar: React.FC<Props> = ({ navItems, cta, tagline, socials, revealOnScroll }) => {
   const pathname = usePathname()
   // Decided here rather than passed down from the layout, because the layout is
   // shared by every route and would otherwise need to know which one is the hero.
@@ -125,7 +125,26 @@ export const Navbar: React.FC<Props> = ({ navItems, cta, socials, revealOnScroll
           </div>
 
           {/* right — single call to action */}
-          <div className="flex justify-end">
+          {/*
+            right — the optional tagline, then the call to action.
+
+            The tagline sits here rather than beside the wordmark on purpose: in the
+            centre cell it would push the mark off-centre whenever it had content.
+            Here the mark stays centred against the viewport whether the tagline is
+            set or not.
+          */}
+          <div className="flex items-center justify-end gap-4">
+            {tagline && (
+              <span className="hidden border-r border-hairline pr-4 text-right text-small leading-tight text-chrome lg:block">
+                {/* " / " in the CMS field becomes a line break, so the client can
+                    stack two lines without needing to write HTML. */}
+                {tagline.split(' / ').map((line, index) => (
+                  <span key={index} className="block">
+                    {line}
+                  </span>
+                ))}
+              </span>
+            )}
             {cta?.label && cta.url && (
               <Button href={cta.url} variant="primary" size="md" className="shrink-0">
                 {cta.label}
