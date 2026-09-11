@@ -129,6 +129,13 @@ async function main() {
 
   await writeFile(path.join(root, 'public/favicon.svg'), favicon)
 
+  // iOS home-screen icon. Safari ignores SVG favicons here, so a raster copy is
+  // rendered from the same source.
+  await sharp(Buffer.from(favicon))
+    .resize(180, 180)
+    .png()
+    .toFile(path.join(root, 'public/apple-touch-icon.png'))
+
   /* ── the painted texture from behind the mark ──────────────────────────── */
   // Taken from the top-left quadrant, which is the cleanest run of paint with
   // no letterforms crossing it.
@@ -154,7 +161,7 @@ async function main() {
     .toFile(path.join(root, 'public/brand/nexgen-logo.webp'))
 
   /* ── the paths again, as a module, so React can inline the mark ────────── */
-  const module = `/**
+  const pathsModule = `/**
  * The NexGen wordmark, traced from the client's logo.jpeg by
  * scripts/extract-logo.mjs. Do not hand-edit — re-run that script instead.
  *
@@ -168,12 +175,13 @@ ${paths.map((d) => `  '${d}',`).join('\n')}
 ]
 `
 
-  await writeFile(path.join(root, 'src/components/site/logoPaths.ts'), module)
+  await writeFile(path.join(root, 'src/components/site/logoPaths.ts'), pathsModule)
 
   console.log('wrote public/brand/nexgen-logo.svg')
   console.log('wrote public/brand/logo-texture.webp')
   console.log('wrote public/brand/nexgen-logo.webp')
   console.log('wrote public/favicon.svg')
+  console.log('wrote public/apple-touch-icon.png')
   console.log('wrote src/components/site/logoPaths.ts')
 }
 

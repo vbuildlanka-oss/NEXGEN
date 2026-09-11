@@ -73,7 +73,8 @@ export async function generateMetadata(): Promise<Metadata> {
       ...(shareImage ? { images: [shareImage] } : {}),
     },
     icons: {
-      icon: '/favicon.svg',
+      icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+      apple: '/apple-touch-icon.png',
     },
   }
 }
@@ -118,6 +119,16 @@ export default async function FrontendLayout({ children }: { children: React.Rea
           tagline={settings?.headerTagline ?? null}
           socials={socials}
         />
+
+        {/* Lets keyboard and screen-reader users jump past the header and the
+            long scroll-driven hero straight to the content. Visually hidden
+            until focused. */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-200 focus:bg-nexgen focus:px-4 focus:py-2 focus:font-display focus:text-ink focus:uppercase"
+        >
+          Skip to content
+        </a>
 
         <main id="main">{children}</main>
 

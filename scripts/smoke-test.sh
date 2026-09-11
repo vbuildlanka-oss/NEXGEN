@@ -55,6 +55,16 @@ printf 'unpublished drafts hidden from public API -> '
 curl -s "$BASE/api/events?limit=1" -o /dev/null -w '[%{http_code}]\n'
 
 echo
+echo "=== SEO + headers ==="
+printf 'robots.txt   -> '
+curl -s -o /dev/null -w '[%{http_code}]  ' "$BASE/robots.txt"; curl -s "$BASE/robots.txt" | tr '\n' '|' | head -c 120; echo
+printf 'sitemap.xml  -> '
+curl -s -o /dev/null -w '[%{http_code}]  ' "$BASE/sitemap.xml"
+echo "$(curl -s "$BASE/sitemap.xml" | grep -c '<url>') urls"
+echo 'security headers on /:'
+curl -sI "$BASE/" | grep -iE 'x-content-type-options|x-frame-options|referrer-policy|permissions-policy' | sed 's/^/  /'
+
+echo
 echo "=== assets ==="
 curl -s -o /dev/null -w '%{http_code}  %{size_download} bytes  media (original webp)\n' "$BASE/api/media/file/image-1.webp"
 curl -s -o /dev/null -w '%{http_code}  %{size_download} bytes  media (card variant)\n' "$BASE/api/media/file/image-1-960x1440.webp"
@@ -67,8 +77,12 @@ HOME_HTML=$(curl -s "$BASE/")
 for needle in 'NexGen' 'hero.mp4' 'data-canvas-trigger' 'Upcoming events' 'Ember Nights'; do
   if grep -q -- "$needle" <<< "$HOME_HTML"; then echo "  found: $needle"; else echo "  MISSING: $needle"; fi
 done
-printf '  hero poster used as video background: '
-grep -q 'background-image:url(/hero/hero-poster' <<< "$HOME_HTML" && echo yes || echo 'no (check)'
+printf '  poster painted as the video background (no-preloader technique): '
+grep -qE '<video[^>]*background-image' <<< "$HOME_HTML" && echo confirmed || echo 'MISSING'
+printf '  video is muted+looping+inline (autoplay allowed): '
+grep -qE '<video[^>]*playsInline|<video[^>]*playsinline' <<< "$HOME_HTML" && echo confirmed || echo 'MISSING'
+printf '  skip-to-content link present: '
+grep -q 'Skip to content' <<< "$HOME_HTML" && echo confirmed || echo 'MISSING'
 printf '  no loading screen / preloader markup: '
 grep -qiE 'id="(preloader|loading-screen)"|class="[^"]*preloader' <<< "$HOME_HTML" && echo 'FOUND ONE' || echo confirmed
 
@@ -101,6 +115,24 @@ agent-browser screenshot "$SHOTS/nx-page-event.png" >/dev/null 2>&1
 agent-browser open "$BASE/admin" >/dev/null 2>&1
 agent-browser wait --load networkidle >/dev/null 2>&1; sleep 4
 agent-browser screenshot "$SHOTS/nx-admin-login.png" >/dev/null 2>&1
+
+echo
+echo "=== mobile viewport (390x844) ==="
+node scripts/mobile-check.mjs "$BASE" || echo "  ! mobile check reported overflow"
+
+echo
+echo "=== content is present without JavaScript ==="
+# Server-rendered HTML must contain the copy, not just placeholders that JS
+# reveals. Checked against the raw response, which is what a crawler sees.
+for needle in "Where to find us next" "Upcoming events" "Nights that start where"; do
+  if curl -s "$BASE/events" "$BASE/" | grep -q "$needle"; then
+    echo "  found in raw HTML: $needle"
+  else
+    echo "  MISSING from raw HTML: $needle"
+  fi
+done
+printf '  no inline visibility:hidden on headings: '
+curl -s "$BASE/events" | grep -qE 'visibility:hidden' && echo 'FOUND — content depends on JS' || echo confirmed
 
 echo
 echo "=== server log (errors only) ==="

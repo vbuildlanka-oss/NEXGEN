@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Wordmark } from '@/components/site/Wordmark'
-import { gsap, ScrollTrigger, prefersReducedMotion } from '@/lib/gsap'
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
+import { gsap, ScrollTrigger } from '@/lib/gsap'
 
 type HeroButton = {
   label: string
@@ -48,11 +49,7 @@ export const HeroVideo: React.FC<Props> = ({
 }) => {
   const sectionRef = useRef<HTMLElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const [reduced, setReduced] = useState(false)
-
-  useEffect(() => {
-    setReduced(prefersReducedMotion())
-  }, [])
+  const reduced = usePrefersReducedMotion()
 
   /* ── autoplay resilience ────────────────────────────────────────────────── */
   useEffect(() => {
@@ -220,7 +217,7 @@ export const HeroVideo: React.FC<Props> = ({
           <div className="container-site">
             {/* The mark itself opens the page, filled with the paint texture from
                 the original logo artwork and drawn on letter by letter. */}
-            <div data-hero-logo className="mb-6 w-[min(70vw,26rem)]">
+            <div data-hero-logo className="mb-5 w-[min(52vw,17rem)]">
               <Wordmark asLink={false} variant="texture" />
             </div>
             <h1 className="display-heading max-w-[24ch]">{headline}</h1>
@@ -248,7 +245,7 @@ export const HeroVideo: React.FC<Props> = ({
           <div
             data-hero-hint
             aria-hidden
-            className="absolute inset-x-0 bottom-5 z-10 flex flex-col items-center gap-2 text-small font-semibold tracking-[0.2em] text-chrome uppercase"
+            className="absolute inset-x-0 bottom-5 z-10 hidden flex-col items-center gap-2 text-small font-semibold tracking-[0.2em] text-chrome uppercase sm:flex"
           >
             {scrollHint}
             <span className="h-8 w-[1px] bg-gradient-to-b from-chrome to-transparent" />

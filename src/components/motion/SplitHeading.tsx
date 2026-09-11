@@ -30,10 +30,13 @@ export const SplitHeading: React.FC<Props> = ({
     const target = root.querySelector<HTMLElement>('[data-split-target]')
     if (!target) return
 
-    if (reduced) {
-      gsap.set(target, { autoAlpha: 1 })
-      return
-    }
+    if (reduced) return
+
+    // Hidden here rather than in the markup. If this code never runs — a failed
+    // GSAP chunk, a JavaScript error, an old browser — the heading is simply
+    // visible and unanimated, instead of the page appearing blank. The hide
+    // happens before paint, so there is no flash of unsplit text.
+    gsap.set(target, { autoAlpha: 0 })
 
     const split = new SplitText(target, {
       type: 'lines',
@@ -71,12 +74,9 @@ export const SplitHeading: React.FC<Props> = ({
       {/* Starts invisible so the un-split text never flashes before SplitText
           has measured it, but stays in the DOM for search engines and for
           visitors with JavaScript disabled (see the <noscript> rule below). */}
-      <Tag data-split-target className={className} style={{ visibility: 'hidden' }}>
+      <Tag data-split-target className={className}>
         {children}
       </Tag>
-      <noscript>
-        <style>{`[data-split-target]{visibility:visible !important}`}</style>
-      </noscript>
     </div>
   )
 }
