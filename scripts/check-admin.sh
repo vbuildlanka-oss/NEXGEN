@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Verifies the admin panel actually renders, not just that /admin returns 200.
 #
-# Exists because a 200 response is not evidence here. On the first deployment the
-# admin returned 200 with 105 KB of correct HTML and still rendered as a blank
-# page: NEXT_PUBLIC_SERVER_URL was a placeholder, so Payload rejected the admin's
-# own API calls on CSRF grounds and the panel never bootstrapped. Only a real
-# browser, checking for laid-out text and focusable inputs, catches that.
+# Exists because a 200 response is not evidence here. The deployed admin returned
+# 200 with 105 KB of correct HTML and still rendered blank: a Turbopack production
+# build silently omitted Payload's admin stylesheet, and without it the panel's
+# containers collapse to zero height and stay hidden. The HTML looked perfect
+# throughout. Only a real browser, counting CSS rules and checking for laid-out
+# text and focusable inputs, catches it.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
@@ -43,10 +44,15 @@ agent-browser eval "(()=>{
     visibleTextLength: document.body.innerText.length,
     inputs: document.querySelectorAll('input').length,
     bodyHeight: Math.round(document.body.getBoundingClientRect().height),
+    // Payload's admin ships ~1500 CSS rules. Anything near 150 means its
+    // stylesheet did not reach the browser, which is what a Turbopack
+    // production build did — the panel then has no layout and renders blank.
     verdict:
-      document.body.innerText.length > 20 && document.querySelectorAll('input').length > 0
+      total > 500 && document.body.innerText.length > 20 && document.querySelectorAll('input').length > 0
         ? 'RENDERS'
-        : 'BLANK — the admin panel is not usable'
+        : total <= 500
+          ? 'BROKEN — admin stylesheet missing (' + total + ' rules, expected >1000)'
+          : 'BROKEN — admin panel is not usable'
   })
 })()"
 
