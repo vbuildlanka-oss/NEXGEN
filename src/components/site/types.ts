@@ -14,7 +14,6 @@ export type SocialLink = {
 export type ChromeData = {
   navItems: NavLink[]
   cta: NavLink | null
-  tagline: string | null
   socials: SocialLink[]
 }
 

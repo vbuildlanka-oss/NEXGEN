@@ -1258,10 +1258,6 @@ export interface SiteSetting {
     url?: string | null;
   };
   /**
-   * The small stacked text next to the logo in the header, e.g. the next event and city. Use " / " to split it across lines.
-   */
-  headerTagline?: string | null;
-  /**
    * A short line about NexGen shown in the footer.
    */
   footerBlurb?: string | null;
@@ -1433,7 +1429,6 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         label?: T;
         url?: T;
       };
-  headerTagline?: T;
   footerBlurb?: T;
   footerColumns?:
     | T

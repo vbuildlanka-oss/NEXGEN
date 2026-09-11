@@ -121,17 +121,17 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
         open ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-full opacity-0'
       }`}
     >
-      {/* Decorative colour blocks, echoing the graphic panels in the reference menu. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-16 -left-10 h-52 w-52 rotate-12 bg-nexgen opacity-90"
-        style={{ clipPath: 'polygon(0 0, 100% 12%, 78% 100%, 0 86%)' }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-[-3rem] bottom-[18%] h-40 w-40 bg-ember opacity-70"
-        style={{ clipPath: 'polygon(14% 0, 100% 8%, 86% 100%, 0 78%)' }}
-      />
+      {/*
+        No decorative colour blocks here.
+
+        The reference site fills its menu with graphic panels, and an early version
+        copied that: a solid NexGen Red shape at the top-left. But that is the exact
+        colour the active menu item uses, sitting directly above the first link, so
+        it read as a selected item. Moving it and fading it stopped the confusion but
+        left shapes clipped against the panel edge that looked like rendering
+        artefacts. A plain panel puts the attention on the navigation, which is what
+        the menu is for.
+      */}
 
       <nav aria-label="Main" className="relative">
         <ul className="flex flex-col gap-2">
@@ -152,9 +152,18 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
                     open ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
                   } ${active ? 'text-nexgen' : 'text-chrome-bright hover:text-ember'}`}
                 >
+                  {/*
+                    The page you are on and the item under your cursor were told
+                    apart only by NexGen Red against Ember Red — two reds close
+                    enough to be effectively the same colour. The current page now
+                    keeps this marker permanently, so "you are here" is a shape
+                    rather than a shade.
+                  */}
                   <span
                     aria-hidden
-                    className="h-[0.14em] w-0 bg-ember transition-all duration-300 ease-[var(--ease-out-quint)] group-hover:w-[0.6em]"
+                    className={`h-[0.14em] transition-all duration-300 ease-[var(--ease-out-quint)] ${
+                      active ? 'w-[0.6em] bg-nexgen' : 'w-0 bg-ember group-hover:w-[0.6em]'
+                    }`}
                   />
                   {item.label}
                 </Link>
@@ -172,7 +181,14 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
       >
         {socials.length > 0 && (
           <div>
-            <p className="eyebrow mb-3">Follow NexGen</p>
+            {/*
+              Not `.eyebrow` here: that is NexGen Red, and a red label sitting in
+              the same column as the red current-page link read as another
+              navigation item. Grey keeps it a label.
+            */}
+            <p className="mb-3 text-small font-semibold tracking-[0.18em] text-chrome-dim uppercase">
+              Follow NexGen
+            </p>
             <ul className="flex flex-wrap gap-x-5 gap-y-2">
               {socials.map((social) => (
                 <li key={social.url}>

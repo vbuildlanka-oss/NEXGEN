@@ -18,13 +18,7 @@ type Props = ChromeData & {
   revealOnScroll?: boolean
 }
 
-export const Navbar: React.FC<Props> = ({
-  navItems,
-  cta,
-  tagline,
-  socials,
-  revealOnScroll,
-}) => {
+export const Navbar: React.FC<Props> = ({ navItems, cta, socials, revealOnScroll }) => {
   const pathname = usePathname()
   // Decided here rather than passed down from the layout, because the layout is
   // shared by every route and would otherwise need to know which one is the hero.
@@ -92,7 +86,7 @@ export const Navbar: React.FC<Props> = ({
         } ${menuOpen ? 'border-transparent' : 'border-hairline'}`}
         style={{ height: 'var(--nav-height)' }}
       >
-        <div className="container-site flex h-full items-center justify-between gap-4">
+        <div className="container-site grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4">
           {/* left — menu trigger */}
           <button
             ref={triggerRef}
@@ -100,7 +94,7 @@ export const Navbar: React.FC<Props> = ({
             onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
             aria-expanded={menuOpen}
             aria-controls="site-menu"
-            className="group -ml-1 flex items-center gap-3 p-1 text-chrome-bright transition-colors hover:text-ember"
+            className="group -ml-1 flex w-fit items-center gap-3 p-1 text-chrome-bright transition-colors hover:text-ember"
           >
             <span className="relative flex h-5 w-7 flex-col justify-between" aria-hidden>
               <span
@@ -125,32 +119,19 @@ export const Navbar: React.FC<Props> = ({
             </span>
           </button>
 
-          {/* centre — wordmark and the standing tagline */}
-          <div className="flex items-center gap-4">
+          {/* centre — the mark, and nothing else */}
+          <div className="flex justify-center">
             <Wordmark className="w-[calc(var(--nav-height)*0.86)] shrink-0 text-chrome-bright" />
-            {tagline && (
-              <span
-                className="hidden border-l border-hairline pl-4 text-small leading-tight text-chrome md:block"
-                // " / " in the CMS field becomes a line break, so the client can
-                // stack "Colombo / Sri Lanka" without needing HTML.
-              >
-                {tagline.split(' / ').map((line, index) => (
-                  <span key={index} className="block">
-                    {line}
-                  </span>
-                ))}
-              </span>
-            )}
           </div>
 
           {/* right — single call to action */}
-          {cta?.label && cta.url ? (
-            <Button href={cta.url} variant="primary" size="md" className="shrink-0">
-              {cta.label}
-            </Button>
-          ) : (
-            <span aria-hidden className="w-8" />
-          )}
+          <div className="flex justify-end">
+            {cta?.label && cta.url && (
+              <Button href={cta.url} variant="primary" size="md" className="shrink-0">
+                {cta.label}
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
