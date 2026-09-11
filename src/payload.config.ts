@@ -19,6 +19,7 @@ import { HomePage } from './globals/HomePage'
 import { OurStory } from './globals/OurStory'
 import { SiteSettings } from './globals/SiteSettings'
 import { buildPreviewUrl } from './lib/preview'
+import { resolveAllowedOrigins, resolveServerURL } from './lib/serverUrl'
 
 /** Maps an admin document to the public page that shows it. */
 function previewPathFor({
@@ -46,7 +47,8 @@ function previewPathFor({
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const serverURL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+const serverURL = resolveServerURL()
+const allowedOrigins = resolveAllowedOrigins()
 
 /**
  * Cloudflare R2 is S3-compatible, so the standard S3 storage adapter drives it.
@@ -146,8 +148,8 @@ export default buildConfig({
     push: process.env.NODE_ENV !== 'production',
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
-  cors: [serverURL],
-  csrf: [serverURL],
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
   sharp,
   plugins: [...storagePlugins],
 })

@@ -301,9 +301,14 @@ The thirteenth value is one you decide now: your final site URL.
 
 Two that matter more than they look:
 
-- **`NEXT_PUBLIC_SERVER_URL` must exactly match the URL you actually visit** —
-  right protocol, no trailing slash. Get it wrong and the admin panel's live
-  preview pane comes up blank.
+- **`NEXT_PUBLIC_SERVER_URL` must be the URL you actually visit** — right
+  protocol, no trailing slash, and not a placeholder. This one bit us on the first
+  deploy: it was left as `https://placeholder.vercel.app`, which pointed the
+  sitemap at a domain that does not exist and made the **entire admin panel render
+  as a blank page** — Payload validates the request origin against this value, so
+  the panel could not call its own API. The site now also trusts Vercel's own
+  hostnames as a fallback, so a wrong value here no longer breaks the admin, but
+  it will still put the wrong URL in your sitemap and share links.
 - **The `R2_*` variables must all be present.** If any is missing, the site falls
   back to writing uploads to local disk, and Vercel's filesystem is read-only —
   so every image upload fails.
@@ -330,64 +335,56 @@ Your site is now live, with no content in it yet. That is Part 5.
 
 ## Part 5 — Loading the content
 
-The site ships with placeholder content written for it: seven homepage panels,
-five events, six updates, a fourteen-photo gallery, and every page's wording.
-This uploads it to your live database and R2 bucket. Run it once, from your own
-machine.
+**Nothing to do — this happens automatically.**
+
+The first production deployment seeds itself. The build runs migrations, then
+loads the placeholder content: seven homepage panels, five events, six updates, a
+fourteen-photo gallery, and every page's wording. The photographs are uploaded to
+your R2 bucket as part of that. Look for it in the build log:
+
+```
++ event: NexGen Presents: Ember Nights
++ media: onedineth-img-11.webp
++ panel 1: Nights that start where the playlist ends
++ globals: homepage, our story, contact, site settings
+```
+
+It is idempotent: every later deploy checks what already exists and adds nothing,
+so editing content in the admin panel is never overwritten by a deployment.
+
+If the log instead shows `seeding did not complete`, the content is missing but
+the site still deployed. The cause is almost always an R2 variable — check the
+warning above that line in the log, then [Part 8](#part-8--troubleshooting).
+
+### Create your admin login
+
+The seed deliberately does **not** create an admin account, because a generated
+password would end up in the build log where anyone with project access could
+read it. Instead:
+
+1. Go to `https://your-site.com/admin`
+2. It shows **"Welcome — to begin, create your first user"**
+3. Enter your email, a password you choose, and your name
+
+That screen only appears while no account exists, so whoever gets there first
+owns the site. Do it now rather than later.
+
+### Starting from scratch instead
+
+Prefer an empty site with no placeholder content? Set `SEED_SKIP=1` in your
+Vercel environment variables before the first deploy, and only the schema is
+created.
+
+### Running the seed by hand
+
+Only needed if you ever want to reload the placeholder content deliberately:
 
 ```bash
 git clone https://github.com/vbuildlanka-oss/NEXGEN.git
-cd NEXGEN
-pnpm install
-```
-
-Create a file called `.env` in that folder containing your **production** values:
-
-```bash
-DATABASE_URI=postgresql://postgres.xxx:PASSWORD@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
-PAYLOAD_SECRET=the-same-secret-you-put-in-vercel
-NEXT_PUBLIC_SERVER_URL=https://your-live-url
-R2_BUCKET=nexgen-media
-R2_ACCESS_KEY_ID=xxx
-R2_SECRET_ACCESS_KEY=xxx
-R2_ENDPOINT=https://xxx.r2.cloudflarestorage.com
-R2_PUBLIC_URL=https://pub-xxx.r2.dev
-```
-
-> `.env` is git-ignored, so it will not be committed. Never paste real
-> credentials into a file that is tracked.
-
-Then:
-
-```bash
+cd NEXGEN && pnpm install
+# create .env with your production DATABASE_URI and R2_* values
 pnpm seed
 ```
-
-It prints progress as it uploads each photo, and finishes with a box like:
-
-```
-┌─────────────────────────────────────────────
-│ Admin account created
-│   email:    vbuildlanka@gmail.com
-│   password: LhmlVsdlwsBa
-│ Change the password after your first login.
-└─────────────────────────────────────────────
-```
-
-**Copy that password.** Then:
-
-1. Go to `https://your-site.com/admin`
-2. Log in with those details
-3. Click your name, top right → **Account** → set a new password
-
-Prefer to start from nothing? Skip `pnpm seed` entirely and go straight to
-`/admin` — it will ask you to create the first admin account, and you will get an
-empty site to fill in yourself.
-
-`pnpm seed` is safe to run twice; it recognises what it already created and adds
-nothing new.
-
----
 
 ## Part 6 — Your domain
 
@@ -491,6 +488,16 @@ The bucket is not publicly readable, or `R2_PUBLIC_URL` is wrong.
 
 `R2_PUBLIC_URL` does not match the URL the browser is being given. Redeploy after
 correcting it — `next.config.ts` reads this at build time to allow the host.
+
+### The whole admin panel is a blank white page
+
+The page returns 200 and the HTML is correct, but nothing renders. Payload checks
+the request origin against `NEXT_PUBLIC_SERVER_URL`; if that does not match the
+host you are on, the admin cannot call its own API and never starts.
+
+Set `NEXT_PUBLIC_SERVER_URL` to your real URL and redeploy. Confirm which value is
+live by opening `/robots.txt` — the `Host:` line shows exactly what the site
+thinks its address is.
 
 ### Admin live preview pane is blank
 

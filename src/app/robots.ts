@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
 
+import { resolveServerURL } from '@/lib/serverUrl'
+
 /**
  * Keeps crawlers out of the parts of the site that are not public content.
  *
@@ -7,7 +9,7 @@ import type { MetadataRoute } from 'next'
  * search engine, and `/next/preview` would hand a crawler a draft-mode cookie.
  */
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SERVER_URL
+  const base = resolveServerURL()
 
   return {
     rules: [
@@ -17,6 +19,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin', '/api/', '/next/preview'],
       },
     ],
-    ...(base ? { sitemap: `${base}/sitemap.xml`, host: base } : {}),
+    sitemap: `${base}/sitemap.xml`,
+    host: base,
   }
 }

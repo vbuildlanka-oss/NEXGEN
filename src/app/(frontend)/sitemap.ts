@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 import { getEventSlugs, getPostSlugs, getPosts, getUpcomingEvents } from '@/lib/queries'
+import { resolveServerURL } from '@/lib/serverUrl'
 
 export const revalidate = 3600
 
@@ -12,7 +13,7 @@ export const revalidate = 3600
  * rules as the public pages.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = (process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000').replace(/\/$/, '')
+  const base = resolveServerURL()
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`, changeFrequency: 'weekly', priority: 1 },

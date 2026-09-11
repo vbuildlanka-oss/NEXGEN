@@ -1,3 +1,5 @@
+import { resolveServerURL } from './serverUrl'
+
 /**
  * Builds the URL the admin panel points its preview at.
  *
@@ -6,7 +8,7 @@
  * remaining invisible to the public.
  */
 export function buildPreviewUrl(path: string): string {
-  const base = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const base = resolveServerURL()
   const params = new URLSearchParams({
     path,
     previewSecret: process.env.PREVIEW_SECRET || '',

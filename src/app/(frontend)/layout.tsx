@@ -9,6 +9,7 @@ import { Navbar } from '@/components/site/Navbar'
 import { FALLBACK_NAV, type NavLink, type SocialLink } from '@/components/site/types'
 import { asMedia, pickSrc } from '@/lib/media'
 import { getContactInfo, getSiteSettings } from '@/lib/queries'
+import { resolveServerURL } from '@/lib/serverUrl'
 
 import './globals.css'
 
@@ -50,10 +51,10 @@ export async function generateMetadata(): Promise<Metadata> {
     'NexGen Entertainment champions the artists shaping what comes next — live events, new music and the crowds who find them first.'
 
   const shareImage = pickSrc(asMedia(seo?.shareImage))
-  const base = process.env.NEXT_PUBLIC_SERVER_URL
+  const base = resolveServerURL()
 
   return {
-    ...(base ? { metadataBase: new URL(base) } : {}),
+    metadataBase: new URL(base),
     title: {
       default: title,
       template: `%s · ${title}`,
@@ -143,7 +144,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
           cta={cta}
         />
 
-        <LivePreviewRefresh serverURL={process.env.NEXT_PUBLIC_SERVER_URL || ''} />
+        <LivePreviewRefresh serverURL={resolveServerURL()} />
       </body>
     </html>
   )

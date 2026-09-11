@@ -416,6 +416,21 @@ async function seedAdminUser(payload: Payload) {
     return
   }
 
+  /**
+   * When seeding runs automatically during a deployment, do not invent an admin
+   * account: the generated password would be written into the build log, which is
+   * readable by anyone with project access and is not a sensible place for a
+   * credential. Payload's own "create first user" screen handles it instead, and
+   * whoever reaches /admin first sets their own password.
+   */
+  if (process.env.SEED_SKIP_USER === '1' && !process.env.PAYLOAD_ADMIN_PASSWORD) {
+    console.log(
+      '  = no admin user yet — create one at /admin (the first-user screen), ' +
+        'so no password is written to this log',
+    )
+    return
+  }
+
   const email = process.env.PAYLOAD_ADMIN_EMAIL || 'vbuildlanka@gmail.com'
   // A generated password is safer than a memorable default, and it is printed
   // once so it can be changed immediately after the first login.
@@ -846,6 +861,22 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
 }
 
 async function main() {
+  /**
+   * Preview deployments usually share production environment variables on Vercel,
+   * so seeding from one would write into the live database. Only production
+   * deployments and local runs may seed.
+   */
+  if (process.env.VERCEL_ENV === 'preview') {
+    console.log('Skipping seed: this is a preview deployment.')
+    process.exit(0)
+  }
+
+  // Opt out entirely — for an operator who wants to start from an empty site.
+  if (process.env.SEED_SKIP === '1') {
+    console.log('Skipping seed: SEED_SKIP=1 is set.')
+    process.exit(0)
+  }
+
   const payload = await getPayload({ config })
 
   console.log('\nSeeding NexGen content…\n')
