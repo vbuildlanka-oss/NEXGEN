@@ -1,7 +1,7 @@
 {
   "name": "nexgen",
   "version": "1.0.0",
-  "description": "NexGen Entertainment — public site and admin panel",
+  "description": "NexGen Entertainment \u2014 public site and admin panel",
   "license": "UNLICENSED",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
     "assets:process": "node scripts/process-assets.mjs",
     "verify": "pnpm check:deploy && pnpm lint && pnpm build && ./scripts/smoke-test.sh",
     "check:mobile": "node scripts/mobile-check.mjs",
-    "check:deploy": "node scripts/check-vercelignore.mjs",
+    "check:deploy": "node scripts/check-vercelignore.mjs && node scripts/check-importmap.mjs",
     "seed:deploy": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" SEED_SKIP_USER=1 tsx scripts/seed.ts"
   },
   "dependencies": {
