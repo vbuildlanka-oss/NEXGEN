@@ -139,7 +139,7 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
       </div>
 
       <nav aria-label="Main" className="relative">
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-2">
           {navItems.map((item, index) => {
             const active = pathname === item.url
 
@@ -153,7 +153,7 @@ export const OverlayMenu: React.FC<Props> = ({ open, onClose, navItems, socials 
                   /* Each link eases in slightly after the one above it. A CSS
                      delay, so a stalled frame cannot leave a link invisible. */
                   style={{ transitionDelay: open ? `${120 + index * 45}ms` : '0ms' }}
-                  className={`group flex items-baseline gap-3 py-1.5 font-display text-[clamp(2rem,7vw,3.25rem)] uppercase leading-[1.02] transition-[opacity,transform,color] duration-400 ${
+                  className={`group flex items-baseline gap-3 py-1.5 font-display text-[clamp(1.35rem,4vw,2rem)] uppercase leading-[1.02] transition-[opacity,transform,color] duration-400 ${
                     open ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
                   } ${active ? 'text-nexgen' : 'text-chrome-bright hover:text-ember'}`}
                 >

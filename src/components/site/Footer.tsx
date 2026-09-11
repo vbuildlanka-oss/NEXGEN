@@ -91,7 +91,6 @@ export const Footer: React.FC<Props> = ({
           © {new Date().getFullYear()} {copyrightName}. All rights reserved.
         </p>
         <p>
-          Photography by ONEDINETH.{' '}
           <Link href="/contact" className="underline underline-offset-4 hover:text-ember">
             Get in touch
           </Link>
