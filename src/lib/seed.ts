@@ -1014,8 +1014,7 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
           { label: "Contact Us", url: "/contact" },
         ],
         headerCta: { label: "Events", url: "/events" },
-        headerTagline: "Colombo, Sri Lanka / Next: see events",
-        footerBlurb:
+          footerBlurb:
           "NexGen Entertainment programmes live music for artists on the way up and the names that got there first.",
         footerColumns: [
           {

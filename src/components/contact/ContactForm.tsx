@@ -143,8 +143,14 @@ export const ContactForm: React.FC<Props> = ({ successMessage }) => {
       </div>
 
       {error && (
+        /*
+          Ember Red is the site's hover and link colour, so an error marked only by
+          it is ambiguous — and colour alone is never a sufficient signal anyway,
+          for anyone who cannot distinguish these two reds. The word carries the
+          meaning; the colour only reinforces it.
+        */
         <p role="alert" className="border-l-2 border-ember pl-3 text-small text-ember">
-          {error}
+          <strong className="font-semibold">Couldn’t send:</strong> {error}
         </p>
       )}
 

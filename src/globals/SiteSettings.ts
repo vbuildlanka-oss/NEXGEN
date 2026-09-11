@@ -108,14 +108,6 @@ export const SiteSettings: GlobalConfig = {
                 },
               ],
             },
-            {
-              name: 'headerTagline',
-              type: 'text',
-              admin: {
-                description:
-                  'The small stacked text next to the logo in the header, e.g. the next event and city. Use " / " to split it across lines.',
-              },
-            },
           ],
         },
         {
