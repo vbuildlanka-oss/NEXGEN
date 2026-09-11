@@ -1,7 +1,10 @@
-# NexGen — setup and deployment
+# NexGen — setup
 
-Everything below is the part I cannot do for you, because it needs accounts in
-your name. Each step says exactly which value to copy and where it goes.
+What the site runs on, and what you have to do yourself because it needs accounts
+in your name.
+
+**Going live? Follow [DEPLOYMENT.md](./DEPLOYMENT.md)** — it is the step-by-step
+runbook. This page is the overview.
 
 There are four services:
 
@@ -16,126 +19,27 @@ Total unavoidable extra cost: the domain name, roughly $10–15/year.
 
 ---
 
-## 1. Supabase — the database
+## Setting up the services
 
-You already have Pro, so the free tier's seven-day pausing does not apply and no
-keep-alive cron is scheduled.
+The click-by-click walkthrough — every screen, every value, and what to do when a
+step fails — is in **[DEPLOYMENT.md](./DEPLOYMENT.md)**. Work through that once and
+the site is live.
 
-1. Go to <https://supabase.com/dashboard> → **New project**.
-   - Name: `nexgen`
-   - Database password: generate a strong one and **save it** — you need it in a
-     moment and it is not recoverable.
-   - Region: pick the one closest to your audience (Singapore or Mumbai for Sri
-     Lanka).
-2. Once the project is ready, go to **Project Settings → Database →
-   Connection string** and choose the **URI** tab.
-3. Select the **Session pooler** option (port `5432`). Copy that string and
-   replace `[YOUR-PASSWORD]` with the password from step 1.
+Two things to know before you open it:
 
-   It looks like:
-   ```
-   postgresql://postgres.abcdefghijkl:YOUR-PASSWORD@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
-   ```
+- **Supabase gives you three connection strings and only one works here.** Use the
+  **Session pooler** (port 5432). The direct connection is IPv6-only, which Vercel
+  cannot reach without a paid add-on, and the transaction pooler drops the session
+  features that database migrations need.
+- **Cloudflare asks for a card before enabling R2**, even though the free
+  allowance covers this site many times over. R2 bills for overage rather than
+  capping usage, so a payment method has to be on file.
 
-   → This is your **`DATABASE_URI`**.
+You will not need to create tables, write Row Level Security policies, or
+configure CORS. The schema is created by migrations on the first deploy, database
+credentials never reach a browser, and images load with ordinary `<img>` tags.
 
-   Use the *Session pooler*, not the direct connection: serverless functions open
-   and close connections constantly and would exhaust the direct connection limit.
-
-**Nothing else in Supabase needs configuring.** No tables to create, no Row Level
-Security policies to write — the site owns its schema and creates it for you via
-migrations on first deploy. You can still browse and edit rows in the Supabase
-**Table Editor** if you ever want to, as a backup to the admin panel.
-
----
-
-## 2. Cloudflare R2 — the image storage
-
-1. Go to <https://dash.cloudflare.com> → **R2** in the sidebar → **Create bucket**.
-   - Name: `nexgen-media`
-   - Location: Automatic
-2. Open the bucket → **Settings** → find **Public access**.
-   - Either enable the **r2.dev subdomain** (quickest), or connect a custom
-     domain such as `media.yourdomain.com` (better — faster, and the URL is
-     yours). Copy whichever URL it gives you.
-
-   → This is your **`R2_PUBLIC_URL`**, e.g. `https://pub-xxxxxxxx.r2.dev`
-
-   The bucket must be publicly readable, because visitors' browsers load the
-   photographs directly from it. Only *reads* are public; uploading still
-   requires the API token below.
-3. Back on the R2 overview page, note the **Account ID** shown on the right.
-
-   → Your **`R2_ENDPOINT`** is `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
-4. Click **Manage R2 API Tokens** → **Create API token**.
-   - Permission: **Object Read & Write**
-   - Scope it to the `nexgen-media` bucket only.
-   - Create it, then copy both values shown — they are displayed **once**.
-
-   → **`R2_ACCESS_KEY_ID`** and **`R2_SECRET_ACCESS_KEY`**
-5. → **`R2_BUCKET`** is `nexgen-media`
-
-If all five R2 variables are absent the site falls back to storing uploads on
-local disk, which is fine for development but **will not work on Vercel** —
-its filesystem is read-only. R2 is required in production.
-
----
-
-## 3. Resend — contact form email
-
-1. Go to <https://resend.com> → sign up.
-2. **Domains** → **Add domain** → enter your domain, then add the DNS records it
-   shows you at your domain registrar. Wait for it to verify.
-3. **API Keys** → **Create API key** → permission **Sending access**. Copy it.
-
-   → **`RESEND_API_KEY`**
-4. → **`CONTACT_EMAIL_FROM`** must be an address on the domain you just verified,
-   e.g. `NexGen Website <website@yourdomain.com>`
-5. → **`CONTACT_EMAIL_TO`** is wherever you want enquiries delivered — any
-   inbox, including Gmail.
-
-If you skip this, the contact form still works: submissions are saved and appear
-under **Inbox → Contact Messages** in the admin panel. They just are not emailed
-to you.
-
----
-
-## 4. Vercel — deploying
-
-1. Go to <https://vercel.com/new> and import the `vbuildlanka-oss/NEXGEN`
-   repository.
-2. Framework preset: **Next.js**. Leave the build settings alone — `vercel.json`
-   already sets the build command to run database migrations before building.
-3. Before clicking Deploy, add these **Environment Variables**:
-
-   | Name | Value |
-   |---|---|
-   | `DATABASE_URI` | from step 1 |
-   | `PAYLOAD_SECRET` | any long random string — run `openssl rand -base64 32` |
-   | `NEXT_PUBLIC_SERVER_URL` | your final site URL, e.g. `https://nexgen.lk` |
-   | `PREVIEW_SECRET` | another long random string |
-   | `R2_BUCKET` | `nexgen-media` |
-   | `R2_ACCESS_KEY_ID` | from step 2 |
-   | `R2_SECRET_ACCESS_KEY` | from step 2 |
-   | `R2_ENDPOINT` | from step 2 |
-   | `R2_PUBLIC_URL` | from step 2 |
-   | `RESEND_API_KEY` | from step 3 |
-   | `CONTACT_EMAIL_FROM` | from step 3 |
-   | `CONTACT_EMAIL_TO` | from step 3 |
-   | `CRON_SECRET` | another long random string |
-
-   `PAYLOAD_SECRET` encrypts admin login sessions — changing it later logs
-   everyone out. `NEXT_PUBLIC_SERVER_URL` must match the real URL or the admin
-   panel's live preview will not load.
-
-4. Deploy. The first build runs the migrations and creates every table.
-
-5. **Add your domain**: Vercel → project → **Settings → Domains**. Then update
-   `NEXT_PUBLIC_SERVER_URL` to the custom domain and redeploy.
-
----
-
-## 5. Filling the site with content
+## Filling the site with content
 
 The site ships with placeholder content already written — including the contact
 details, which are deliberately obvious placeholders for you to replace. To load
@@ -174,7 +78,7 @@ always be restored. Use **Preview** to see changes side by side before publishin
 
 ---
 
-## 6. Local development
+## Local development
 
 ```bash
 cp .env.example .env      # then fill in DATABASE_URI and PAYLOAD_SECRET
@@ -194,7 +98,7 @@ node scripts/extract-logo.mjs # re-traces logo.jpeg into the SVG wordmark
 
 ---
 
-## 7. Things to be aware of
+## Things to be aware of
 
 - **Two supplied image files are unusable.** `Gallery/ONEDINETH IMG 343.jpg` and
   `Homepage pic combo/Background pics/ONEDINETH IMG 271.jpg` are 133-byte Git LFS
@@ -215,7 +119,7 @@ node scripts/extract-logo.mjs # re-traces logo.jpeg into the SVG wordmark
 
 ---
 
-## 8. Verifying a build before you deploy
+## Verifying a build before you deploy
 
 ```bash
 pnpm verify
