@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm payload migrate && pnpm build",
+  "buildCommand": "pnpm payload migrate && (pnpm seed:deploy || echo '::warning:: seeding did not complete \u2014 see the log above; the site will deploy without content') && pnpm build",
   "framework": "nextjs"
 }

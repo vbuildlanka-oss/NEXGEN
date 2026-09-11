@@ -19,7 +19,8 @@
     "assets:process": "node scripts/process-assets.mjs",
     "verify": "pnpm check:deploy && pnpm lint && pnpm build && ./scripts/smoke-test.sh",
     "check:mobile": "node scripts/mobile-check.mjs",
-    "check:deploy": "node scripts/check-vercelignore.mjs"
+    "check:deploy": "node scripts/check-vercelignore.mjs",
+    "seed:deploy": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" SEED_SKIP_USER=1 tsx scripts/seed.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.89.0",
