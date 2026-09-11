@@ -51,6 +51,7 @@ export default async function OurStoryPage() {
         // Alternate which side the photograph sits on, so a page of four text
         // blocks still has a rhythm to scroll through.
         const imageFirst = index % 2 === 1
+        const number = String(index + 1).padStart(2, '0')
 
         return (
           <section
@@ -58,29 +59,69 @@ export default async function OurStoryPage() {
             className={`section-pad ${index > 0 ? 'border-t border-hairline' : ''}`}
           >
             <div className="container-site">
+              {/*
+                Only split into two columns when there is actually a photograph to
+                put in the second one. Previously the grid was always two columns,
+                so a section without an image — "What is NexGen?" — rendered its
+                text in the left column and left the right half of the screen
+                empty.
+              */}
               <div
-                className={`grid items-start gap-[clamp(2rem,5vw,5rem)] ${
-                  section.image ? 'lg:grid-cols-2' : 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]'
+                className={`grid items-start gap-[clamp(2rem,5vw,4.5rem)] ${
+                  section.image ? 'lg:grid-cols-2' : ''
                 }`}
               >
-                {section.image && imageFirst && (
-                  <Reveal className="lg:order-first">
-                    <Parallax distance={9}>
-                      <ResponsiveImage
-                        media={section.image}
-                        sizes="(max-width: 1024px) 92vw, 46vw"
-                        className="w-full object-cover"
-                        alt=""
+                {section.image && (
+                  <Reveal className={imageFirst ? 'lg:order-first' : 'lg:order-last'}>
+                    <div className="relative lg:sticky lg:top-[calc(var(--nav-height)+2rem)]">
+                      {/* Offset colour block, so the photograph sits on the page
+                          rather than floating in it. */}
+                      <span
+                        aria-hidden
+                        className={`absolute inset-0 -z-10 ${
+                          imageFirst ? '-translate-x-3 -translate-y-3' : 'translate-x-3 translate-y-3'
+                        } ${index % 2 === 0 ? 'bg-nexgen' : 'bg-ember'} opacity-30`}
                       />
-                    </Parallax>
+                      {/*
+                        A fixed aspect frame. The source photographs are a mix of
+                        portrait and landscape, and rendering them at their natural
+                        ratio made the portrait ones absurdly tall — a single image
+                        ran longer than the text beside it. Cropping to a
+                        consistent landscape frame keeps the page rhythm, and
+                        `sticky` means a short caption never leaves dead space
+                        alongside a long one.
+                      */}
+                      <Parallax
+                        className="chamfer aspect-[4/3] w-full lg:aspect-[5/4]"
+                        distance={10}
+                      >
+                        <ResponsiveImage
+                          media={section.image}
+                          sizes="(max-width: 1024px) 92vw, 46vw"
+                          reserveSpace={false}
+                          className="h-full w-full object-cover"
+                          alt=""
+                        />
+                      </Parallax>
+                    </div>
                   </Reveal>
                 )}
 
-                <div className={imageFirst ? 'lg:order-last' : ''}>
-                  <span
-                    aria-hidden
-                    className="mb-6 block h-[3px] w-16 bg-nexgen"
-                  />
+                <div className={section.image ? '' : 'max-w-[68ch]'}>
+                  {/* Numbered like chapters, which gives the four sections a
+                      sense of sequence and fills the space a missing image
+                      would otherwise leave. */}
+                  <div className="mb-6 flex items-center gap-4">
+                    <span
+                      aria-hidden
+                      className="font-display text-[clamp(2.25rem,5vw,3.5rem)] leading-none text-chrome"
+                      style={{ opacity: 0.35 }}
+                    >
+                      {number}
+                    </span>
+                    <span aria-hidden className="h-[3px] flex-1 bg-nexgen" />
+                  </div>
+
                   {section.heading && (
                     <SplitHeading as="h2" className="text-[clamp(1.9rem,4vw,3rem)]">
                       {section.heading}
@@ -99,19 +140,6 @@ export default async function OurStoryPage() {
                     </Reveal>
                   )}
                 </div>
-
-                {section.image && !imageFirst && (
-                  <Reveal>
-                    <Parallax distance={9}>
-                      <ResponsiveImage
-                        media={section.image}
-                        sizes="(max-width: 1024px) 92vw, 46vw"
-                        className="w-full object-cover"
-                        alt=""
-                      />
-                    </Parallax>
-                  </Reveal>
-                )}
               </div>
             </div>
           </section>

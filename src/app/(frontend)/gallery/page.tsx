@@ -56,7 +56,6 @@ export default async function GalleryPage() {
       <PageHeader
         eyebrow="Gallery"
         heading="Nights worth remembering"
-        standfirst={`${photos.length} photographs from NexGen events.`}
         image={photos[0]}
       />
 
