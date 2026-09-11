@@ -352,9 +352,25 @@ your R2 bucket as part of that. Look for it in the build log:
 It is idempotent: every later deploy checks what already exists and adds nothing,
 so editing content in the admin panel is never overwritten by a deployment.
 
-If the log instead shows `seeding did not complete`, the content is missing but
-the site still deployed. The cause is almost always an R2 variable — check the
-warning above that line in the log, then [Part 8](#part-8--troubleshooting).
+If the log instead shows `seeding did not complete`, the content is missing but the
+site still deployed. The log will name the cause under `SEEDING FAILED`; it is
+almost always an R2 variable.
+
+Once the variable is fixed, you do **not** need to redeploy to load the content —
+call the seed endpoint directly and it will tell you exactly what went wrong:
+
+```bash
+curl -X POST https://your-site.com/api/admin/seed \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
+
+A success looks like:
+
+```json
+{"ok":true,"counts":{"events":5,"posts":6,"media":27,"panels":7,"users":0},"warnings":[]}
+```
+
+A failure returns the actual error rather than making you read a build log.
 
 ### Create your admin login
 
@@ -489,15 +505,19 @@ The bucket is not publicly readable, or `R2_PUBLIC_URL` is wrong.
 `R2_PUBLIC_URL` does not match the URL the browser is being given. Redeploy after
 correcting it — `next.config.ts` reads this at build time to allow the host.
 
-### The whole admin panel is a blank white page
+### The whole admin panel is blank
 
-The page returns 200 and the HTML is correct, but nothing renders. Payload checks
-the request origin against `NEXT_PUBLIC_SERVER_URL`; if that does not match the
-host you are on, the admin cannot call its own API and never starts.
+Fixed in the code — the admin panel now uses relative URLs, so it works on
+whatever host serves it. If you are on an older deployment, redeploy.
 
-Set `NEXT_PUBLIC_SERVER_URL` to your real URL and redeploy. Confirm which value is
-live by opening `/robots.txt` — the `Host:` line shows exactly what the site
-thinks its address is.
+For the record, the cause was `NEXT_PUBLIC_SERVER_URL` being a placeholder:
+Payload used it as the absolute base for the admin's own API calls, so the panel
+was calling a host that did not exist and rendered nothing, with no console error.
+
+`NEXT_PUBLIC_SERVER_URL` still matters for canonical URLs, sitemaps and share
+links. Check what is actually live by opening `/robots.txt` — the `Host:` line
+shows what the site believes its address is. If that is wrong, fix the variable and
+redeploy.
 
 ### Admin live preview pane is blank
 

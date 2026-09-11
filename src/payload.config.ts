@@ -19,7 +19,7 @@ import { HomePage } from './globals/HomePage'
 import { OurStory } from './globals/OurStory'
 import { SiteSettings } from './globals/SiteSettings'
 import { buildPreviewUrl } from './lib/preview'
-import { resolveAllowedOrigins, resolveServerURL } from './lib/serverUrl'
+import { resolveAllowedOrigins } from './lib/serverUrl'
 
 /** Maps an admin document to the public page that shows it. */
 function previewPathFor({
@@ -47,7 +47,6 @@ function previewPathFor({
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const serverURL = resolveServerURL()
 const allowedOrigins = resolveAllowedOrigins()
 
 /**
@@ -93,7 +92,21 @@ const storagePlugins: Plugin[] = r2Configured
   : []
 
 export default buildConfig({
-  serverURL,
+  /**
+   * `serverURL` is deliberately NOT set.
+   *
+   * When it is set, Payload uses it as the absolute base for the admin panel's own
+   * API calls. A wrong value — a placeholder, an old domain, http instead of https
+   * — therefore points the admin panel at a host that does not answer, and it
+   * renders as a blank page with no error in the console. That is exactly what
+   * happened on the first deployment.
+   *
+   * Omitted, Payload uses relative URLs and the admin panel works on whatever host
+   * is serving it: the .vercel.app domain, a custom domain and preview deployments
+   * alike. Absolute URLs are still needed for live preview, sitemaps and metadata,
+   * and those come from resolveServerURL() where a wrong value is cosmetic rather
+   * than fatal.
+   */
   admin: {
     user: Users.slug,
     importMap: {
