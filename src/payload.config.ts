@@ -235,6 +235,23 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
+      /**
+       * Supabase's session pooler allows 15 clients. Left at the driver default
+       * of 10 per pool, a production build exhausted it — prerendering 25 pages
+       * opens connections faster than they are returned, and the migrate and seed
+       * steps that ran moments earlier may still be holding some while Supavisor
+       * reaps them. The build then failed with:
+       *
+       *   (EMAXCONNSESSION) max clients reached in session mode
+       *
+       * Four is ample. Page rendering is a short read, not a long transaction, so
+       * a small pool with fast turnover beats a large one — and on serverless each
+       * instance gets its own pool, which is the other way to exhaust the limit.
+       */
+      max: 4,
+      // Hand connections back quickly rather than holding them idle.
+      idleTimeoutMillis: 10_000,
+      connectionTimeoutMillis: 15_000,
     },
     // Schema is pushed automatically while developing; production changes go
     // through committed migrations in src/migrations.
