@@ -85,6 +85,14 @@ export const SiteSettings: GlobalConfig = {
               ],
             },
             {
+              name: 'headerTagline',
+              type: 'text',
+              admin: {
+                description:
+                  'Optional small text shown in the header, to the left of the button — for example the next event and city. Leave empty to show only the NexGen logo. Use " / " to split it across two lines.',
+              },
+            },
+            {
               name: 'headerCta',
               type: 'group',
               label: 'Header button',

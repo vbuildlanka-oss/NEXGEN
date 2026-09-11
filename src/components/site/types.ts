@@ -14,6 +14,8 @@ export type SocialLink = {
 export type ChromeData = {
   navItems: NavLink[]
   cta: NavLink | null
+  /** Optional small header text. Empty means the wordmark shows alone. */
+  tagline: string | null
   socials: SocialLink[]
 }
 

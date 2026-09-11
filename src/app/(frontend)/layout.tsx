@@ -120,6 +120,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         <Navbar
           navItems={navItems}
           cta={cta}
+          tagline={settings?.headerTagline ?? null}
           socials={socials}
         />
 
