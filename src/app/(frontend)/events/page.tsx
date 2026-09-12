@@ -45,7 +45,7 @@ export default async function EventsPage() {
       <section id="upcoming" className="section-pad">
         <div className="container-site">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-            <SplitHeading as="h2" className="text-[clamp(1.9rem,4vw,3rem)]">
+            <SplitHeading as="h2" className="type-3">
               Upcoming events
             </SplitHeading>
             <p className="text-small tracking-[0.14em] text-chrome-dim uppercase">
@@ -88,7 +88,7 @@ export default async function EventsPage() {
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="eyebrow mb-3">The archive</p>
-                <SplitHeading as="h2" className="text-[clamp(1.9rem,4vw,3rem)]">
+                <SplitHeading as="h2" className="type-3">
                   Past events
                 </SplitHeading>
               </div>

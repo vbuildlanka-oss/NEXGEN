@@ -61,7 +61,7 @@ export const GalleryGrid: React.FC<Props> = ({ photos, label }) => {
   return (
     <>
       {label && (
-        <h2 className="mb-6 flex items-baseline gap-4 text-[clamp(1.4rem,2.6vw,2rem)]">
+        <h2 className="mb-6 flex items-baseline gap-4 type-5">
           {label}
           <span aria-hidden className="h-[2px] flex-1 bg-hairline" />
           <span className="font-body text-small font-normal tracking-[0.14em] text-chrome-dim uppercase">

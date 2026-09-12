@@ -53,7 +53,7 @@ export const EventCard: React.FC<Props> = ({ event, variant = 'upcoming' }) => {
 
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div>
-          <h3 className="text-[clamp(1.3rem,2.2vw,1.75rem)] leading-[1.06]">{event.title}</h3>
+          <h3 className="type-6 leading-[1.06]">{event.title}</h3>
           {event.tagline && <p className="mt-1 text-small text-chrome-dim">{event.tagline}</p>}
         </div>
 

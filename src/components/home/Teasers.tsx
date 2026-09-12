@@ -60,7 +60,7 @@ export const Teasers: React.FC<Props> = ({ teasers }) => {
 
                 <div className="flex flex-1 flex-col gap-3 p-6">
                   {teaser.eyebrow && <p className="eyebrow">{teaser.eyebrow}</p>}
-                  <SplitHeading as="h2" className="text-[clamp(1.5rem,2.6vw,2.1rem)]">
+                  <SplitHeading as="h2" className="type-5">
                     {teaser.heading}
                   </SplitHeading>
                   {teaser.body && <p className="text-chrome">{teaser.body}</p>}

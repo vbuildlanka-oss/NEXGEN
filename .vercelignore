@@ -23,6 +23,9 @@
 # The original logo artwork. The traced SVG in public/brand is what ships.
 /logo.jpeg
 
+# The hero soundtrack master. The encoded copy in public/hero is what ships.
+/snippet2.mp3.mpeg
+
 # Never ship local secrets. Git-ignored already, so this only matters for a
 # `vercel` CLI deploy from a working copy.
 /.env

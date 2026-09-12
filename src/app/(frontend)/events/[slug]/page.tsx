@@ -108,7 +108,7 @@ export default async function EventPage({ params }: Params) {
                 <ul className="flex flex-col gap-2">
                   {(event.artists ?? []).map((artist, index) => (
                     <li key={`${artist.name}-${index}`} className="flex items-baseline gap-4">
-                      <span className="font-display text-[clamp(1.4rem,3vw,2.25rem)] leading-none text-chrome-bright uppercase">
+                      <span className="font-display type-5 leading-none text-chrome-bright uppercase">
                         {artist.name}
                       </span>
                       {artist.role && (
@@ -133,7 +133,7 @@ export default async function EventPage({ params }: Params) {
 
             {!isPast ? (
               <>
-                <p className="font-display text-[clamp(2rem,4vw,2.75rem)] leading-none text-chrome-bright">
+                <p className="font-display type-3 leading-none text-chrome-bright">
                   {formatPrice(event.ticketPrice, event.currency)}
                 </p>
                 {event.ticketNote && (
@@ -207,7 +207,7 @@ export default async function EventPage({ params }: Params) {
       {others.length > 0 && (
         <section className="section-pad border-t border-hairline">
           <div className="container-site">
-            <SplitHeading as="h2" className="mb-10 text-[clamp(1.7rem,3.4vw,2.5rem)]">
+            <SplitHeading as="h2" className="mb-10 type-4">
               While you’re here
             </SplitHeading>
             <ul className="flex flex-col divide-y divide-[color-mix(in_oklab,var(--color-chrome)_22%,transparent)] border-y border-hairline">
@@ -217,7 +217,7 @@ export default async function EventPage({ params }: Params) {
                     href={`/events/${other.slug}`}
                     className="group flex flex-wrap items-baseline justify-between gap-3 py-5 transition-colors"
                   >
-                    <span className="font-display text-[clamp(1.3rem,2.6vw,2rem)] text-chrome-bright uppercase transition-colors group-hover:text-ember">
+                    <span className="font-display type-5 text-chrome-bright uppercase transition-colors group-hover:text-ember">
                       {other.title}
                     </span>
                     <span className="text-small text-chrome">

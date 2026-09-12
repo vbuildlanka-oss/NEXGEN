@@ -41,7 +41,7 @@ export default async function ContactPage() {
       <section className="section-pad">
         <div className="container-site grid gap-[clamp(2.5rem,6vw,5rem)] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           <div>
-            <SplitHeading as="h2" className="mb-8 text-[clamp(1.6rem,3.2vw,2.4rem)]">
+            <SplitHeading as="h2" className="mb-8 type-4">
               Send us a message
             </SplitHeading>
             <ContactForm

@@ -85,7 +85,7 @@ export const PanelsIntro: React.FC<Props> = ({ eyebrow, statement }) => {
           {eyebrow && <p className="eyebrow mb-6">{eyebrow}</p>}
           <p
             data-intro-statement
-            className="max-w-[46ch] font-display text-[clamp(1.9rem,5.2vw,4.25rem)] leading-[1.06] uppercase"
+            className="max-w-[46ch] font-display type-1 leading-[1.06] uppercase"
           >
             {statement}
           </p>

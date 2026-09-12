@@ -22,6 +22,7 @@ const DEFAULT_HERO = {
   mp4: '/hero/hero.mp4',
   webm: '/hero/hero.webm',
   poster: '/hero/hero-poster.jpg',
+  audio: '/hero/hero-audio.mp3',
 }
 
 export default async function HomePage() {
@@ -52,6 +53,7 @@ export default async function HomePage() {
         mp4Url={heroVideo?.url ?? DEFAULT_HERO.mp4}
         webmUrl={heroVideo?.url ? null : DEFAULT_HERO.webm}
         posterUrl={pickSrc(heroPoster) ?? DEFAULT_HERO.poster}
+        audioUrl={DEFAULT_HERO.audio}
         headline={home?.heroHeadline ?? 'A new generation of entertainment'}
         subheadline={home?.heroSubheadline}
         scrollHint={home?.heroScrollHint}
@@ -78,7 +80,7 @@ export default async function HomePage() {
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="eyebrow mb-3">What’s coming</p>
-                <SplitHeading as="h2" className="text-[clamp(2rem,4.5vw,3.5rem)]">
+                <SplitHeading as="h2" className="type-2">
                   Upcoming events
                 </SplitHeading>
               </div>
@@ -107,7 +109,7 @@ export default async function HomePage() {
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="eyebrow mb-3">From the newsroom</p>
-                <SplitHeading as="h2" className="text-[clamp(2rem,4.5vw,3.5rem)]">
+                <SplitHeading as="h2" className="type-2">
                   Latest updates
                 </SplitHeading>
               </div>

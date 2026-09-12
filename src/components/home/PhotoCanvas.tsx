@@ -348,7 +348,7 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                     )}
                     <h2
                       data-canvas-heading
-                      className="text-[clamp(1.6rem,4.2vw,2.6rem)] leading-[1.04] text-ink"
+                      className="type-4 leading-[1.04] text-ink"
                     >
                       {panel.heading}
                     </h2>

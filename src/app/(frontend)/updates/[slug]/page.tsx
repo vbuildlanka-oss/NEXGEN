@@ -123,7 +123,7 @@ export default async function PostPage({ params }: Params) {
       {related.length > 0 && (
         <section className="section-pad border-t border-hairline bg-surface">
           <div className="container-site">
-            <SplitHeading as="h2" className="mb-10 text-[clamp(1.7rem,3.4vw,2.5rem)]">
+            <SplitHeading as="h2" className="mb-10 type-4">
               {`More ${category.toLowerCase()}`}
             </SplitHeading>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
