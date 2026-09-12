@@ -104,9 +104,33 @@ export default async function FrontendLayout({ children }: { children: React.Rea
 
   const announcement = settings?.announcement
 
+  /**
+   * Typography chosen in Site settings, applied as two CSS variables on the root.
+   *
+   * Rendered into the document rather than set from script, so the page arrives at
+   * the right size — setting it after hydration would show a flash of the default
+   * and reflow the whole page. Values are constrained to the options the field
+   * offers, so nothing arbitrary can reach the stylesheet.
+   */
+  const allowedTextSizes = ['0.85', '0.9', '0.95', '1', '1.05', '1.1', '1.2']
+  const allowedWeights = ['600', '700', '800']
+
+  const textSize = allowedTextSizes.includes(settings?.typography?.textSize ?? '')
+    ? settings!.typography!.textSize!
+    : '1'
+  const headingWeight = allowedWeights.includes(settings?.typography?.headingWeight ?? '')
+    ? settings!.typography!.headingWeight!
+    : '800'
+
   return (
     <html lang="en" className={`${displayFace.variable} ${bodyFace.variable}`}>
       <body>
+        {/* Only emitted when it differs from the design default, so the common
+            case adds nothing to the page. */}
+        {(textSize !== '1' || headingWeight !== '800') && (
+          <style>{`:root{--type-adjust:${textSize};--heading-weight:${headingWeight}}`}</style>
+        )}
+
         <SmoothScroll />
 
         {announcement?.enabled && (

@@ -119,6 +119,56 @@ export const SiteSettings: GlobalConfig = {
           ],
         },
         {
+          label: 'Typography',
+          fields: [
+            {
+              name: 'typography',
+              type: 'group',
+              label: false,
+              admin: {
+                description:
+                  'Applies to the whole site at once — every heading, paragraph and button scales together, keeping their relative proportions. There is no need to set sizes element by element.',
+              },
+              fields: [
+                {
+                  name: 'textSize',
+                  type: 'select',
+                  label: 'Overall text size',
+                  defaultValue: '1',
+                  options: [
+                    { label: 'Much smaller (−15%)', value: '0.85' },
+                    { label: 'Smaller (−10%)', value: '0.9' },
+                    { label: 'Slightly smaller (−5%)', value: '0.95' },
+                    { label: 'As designed — recommended', value: '1' },
+                    { label: 'Slightly larger (+5%)', value: '1.05' },
+                    { label: 'Larger (+10%)', value: '1.1' },
+                    { label: 'Much larger (+20%)', value: '1.2' },
+                  ],
+                  admin: {
+                    description:
+                      '"As designed" is the size the site was built and reviewed at. The others step away from it proportionally — nothing will break at any setting, but the extremes are worth previewing before saving.',
+                  },
+                },
+                {
+                  name: 'headingWeight',
+                  type: 'select',
+                  label: 'Heading weight',
+                  defaultValue: '800',
+                  options: [
+                    { label: 'Bold', value: '600' },
+                    { label: 'Extra bold', value: '700' },
+                    { label: 'Heaviest — recommended', value: '800' },
+                  ],
+                  admin: {
+                    description:
+                      'How heavy the condensed display type is. The heaviest matches the weight of the NexGen logo.',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
           label: 'Footer',
           fields: [
             {
