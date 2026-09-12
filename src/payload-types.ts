@@ -1262,6 +1262,19 @@ export interface SiteSetting {
     url?: string | null;
   };
   /**
+   * Applies to the whole site at once — every heading, paragraph and button scales together, keeping their relative proportions. There is no need to set sizes element by element.
+   */
+  typography?: {
+    /**
+     * "As designed" is the size the site was built and reviewed at. The others step away from it proportionally — nothing will break at any setting, but the extremes are worth previewing before saving.
+     */
+    textSize?: ('0.85' | '0.9' | '0.95' | '1' | '1.05' | '1.1' | '1.2') | null;
+    /**
+     * How heavy the condensed display type is. The heaviest matches the weight of the NexGen logo.
+     */
+    headingWeight?: ('600' | '700' | '800') | null;
+  };
+  /**
    * A short line about NexGen shown in the footer.
    */
   footerBlurb?: string | null;
@@ -1433,6 +1446,12 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | {
         label?: T;
         url?: T;
+      };
+  typography?:
+    | T
+    | {
+        textSize?: T;
+        headingWeight?: T;
       };
   footerBlurb?: T;
   footerColumns?:

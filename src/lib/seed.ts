@@ -1033,7 +1033,12 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
             ],
           },
         ],
-        copyrightName: "NexGen Entertainment",
+        typography: {
+        // The size and weight the site was designed and reviewed at.
+        textSize: "1",
+        headingWeight: "800",
+      },
+      copyrightName: "NexGen Entertainment",
         seo: {
           defaultTitle: "NexGen Entertainment",
           defaultDescription:

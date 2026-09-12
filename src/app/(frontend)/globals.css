@@ -41,7 +41,19 @@
    * the body clips horizontal overflow it would be silently cut off instead of
    * producing a scrollbar. Tying them to the viewport means they cannot outgrow it.
    */
-  --type-scale: 0.88;
+  /**
+   * `--type-base` is the agreed baseline, tuned once and left alone.
+   * `--type-adjust` is what Site settings changes — 1 means "as designed", which is
+   * the recommended option in the admin. Keeping them separate means an editor can
+   * nudge the whole site without overwriting a considered starting point, and the
+   * baseline can still differ per breakpoint underneath them.
+   */
+  --type-base: 0.88;
+  --type-adjust: 1;
+  --type-scale: calc(var(--type-base) * var(--type-adjust));
+
+  /** Heading weight, also settable from the admin. Oxanium 600–800 are loaded. */
+  --heading-weight: 800;
 
   --text-display: calc(clamp(1.85rem, 8.4vw, 5.25rem) * var(--type-scale));
   --text-h1: calc(clamp(1.85rem, 7.2vw, 3.875rem) * var(--type-scale));
@@ -113,7 +125,7 @@
   h4,
   h5 {
     font-family: var(--font-display);
-    font-weight: 800;
+    font-weight: var(--heading-weight);
     line-height: 1.04;
     text-transform: uppercase;
     /* A little more air than before: Oxanium set smaller needs the letters to
@@ -143,8 +155,9 @@
 
   @media (max-width: 900px) {
     :root {
-      /* Slightly tighter again on small screens, on top of the global scale. */
-      --type-scale: 0.84;
+      /* Slightly tighter again on small screens. Adjusts the baseline, so the
+         editor's setting continues to apply on top of it. */
+      --type-base: 0.84;
       --text-h2: 2rem;
       --text-h3: 1.75rem;
       --text-h4: 1.4rem;
@@ -260,7 +273,7 @@
   .display-heading {
     font-family: var(--font-display);
     font-size: var(--text-display);
-    font-weight: 800;
+    font-weight: var(--heading-weight);
     line-height: 1;
     letter-spacing: 0.018em;
     text-transform: uppercase;
