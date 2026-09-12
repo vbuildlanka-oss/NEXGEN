@@ -114,7 +114,7 @@ export default async function OurStoryPage() {
                   <div className="mb-6 flex items-center gap-4">
                     <span
                       aria-hidden
-                      className="font-display text-[clamp(2.25rem,5vw,3.5rem)] leading-none text-chrome"
+                      className="font-display type-2 leading-none text-chrome"
                       style={{ opacity: 0.35 }}
                     >
                       {number}
@@ -123,7 +123,7 @@ export default async function OurStoryPage() {
                   </div>
 
                   {section.heading && (
-                    <SplitHeading as="h2" className="text-[clamp(1.9rem,4vw,3rem)]">
+                    <SplitHeading as="h2" className="type-3">
                       {section.heading}
                     </SplitHeading>
                   )}
@@ -134,7 +134,7 @@ export default async function OurStoryPage() {
 
                   {section.pullQuote && (
                     <Reveal className="mt-8">
-                      <p className="border-l-[3px] border-ember pl-5 font-display text-[clamp(1.4rem,2.6vw,2rem)] leading-[1.1] text-chrome-bright uppercase">
+                      <p className="border-l-[3px] border-ember pl-5 font-display type-5 leading-[1.1] text-chrome-bright uppercase">
                         {section.pullQuote}
                       </p>
                     </Reveal>
@@ -150,7 +150,7 @@ export default async function OurStoryPage() {
         <div className="container-site flex flex-col items-start gap-6 py-[clamp(3rem,7vw,6rem)] md:flex-row md:items-center md:justify-between">
           <div>
             <p className="eyebrow mb-3">Come and see for yourself</p>
-            <SplitHeading as="h2" className="text-[clamp(1.8rem,3.6vw,2.75rem)]">
+            <SplitHeading as="h2" className="type-3">
               The next one is already in motion
             </SplitHeading>
           </div>

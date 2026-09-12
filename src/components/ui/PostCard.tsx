@@ -52,7 +52,7 @@ export const PostCard: React.FC<Props> = ({ post, featured = false }) => {
         </div>
 
         <h3
-          className={featured ? 'text-[clamp(1.6rem,3vw,2.4rem)]' : 'text-[clamp(1.2rem,2vw,1.6rem)]'}
+          className={featured ? 'type-4' : 'type-6'}
         >
           {post.title}
         </h3>

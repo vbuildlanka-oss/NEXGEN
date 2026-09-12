@@ -28,21 +28,42 @@
   --font-display: var(--font-display-face), 'Arial Narrow', 'Haettenschweiler', sans-serif;
   --font-body: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
 
-  /* Type scale, echoing the reference site's ratios.
-     The two largest steps are fluid rather than fixed-with-a-breakpoint: a single
-     long word set at a fixed size ("ENTERTAINMENT") is wider than a 390px screen,
-     and because the body clips horizontal overflow it would be silently cut off
-     rather than causing a visible scrollbar. Tying them to the viewport means
-     they cannot outgrow it at any width. */
-  --text-display: clamp(1.75rem, 8.6vw, 5.25rem);
-  --text-h1: clamp(1.75rem, 7.4vw, 3.875rem);
-  --text-h2: 2.625rem;
-  --text-h3: 2.375rem;
-  --text-h4: 1.625rem;
-  --text-h5: 1.25rem;
-  --text-body-lg: 1.25rem;
-  --text-body: 1.125rem;
+  /**
+   * Type scale.
+   *
+   * `--type-scale` multiplies every step, so the whole site's typography can be
+   * tuned from one number rather than by hunting through components. The client
+   * found the original setting too loud; this is 0.88, and dropping it to 0.82 or
+   * lifting it to 0.95 needs no other change.
+   *
+   * The largest steps are fluid rather than fixed-with-a-breakpoint: one long word
+   * at a fixed size ("ENTERTAINMENT") is wider than a 390px screen, and because
+   * the body clips horizontal overflow it would be silently cut off instead of
+   * producing a scrollbar. Tying them to the viewport means they cannot outgrow it.
+   */
+  --type-scale: 0.88;
+
+  --text-display: calc(clamp(1.85rem, 8.4vw, 5.25rem) * var(--type-scale));
+  --text-h1: calc(clamp(1.85rem, 7.2vw, 3.875rem) * var(--type-scale));
+  --text-h2: calc(2.625rem * var(--type-scale));
+  --text-h3: calc(2.375rem * var(--type-scale));
+  --text-h4: calc(1.625rem * var(--type-scale));
+  --text-h5: calc(1.25rem * var(--type-scale));
+  --text-body-lg: calc(1.25rem * var(--type-scale));
+  --text-body: calc(1.1rem * var(--type-scale));
   --text-small: 0.875rem;
+
+  /**
+   * A ladder of display sizes, replacing the two dozen one-off clamps that were
+   * scattered through the components. Every heading now picks a rung, so the
+   * relationships between them are deliberate rather than accidental.
+   */
+  --type-1: calc(clamp(1.85rem, 5vw, 4rem) * var(--type-scale));
+  --type-2: calc(clamp(1.75rem, 4.2vw, 3.25rem) * var(--type-scale));
+  --type-3: calc(clamp(1.6rem, 3.6vw, 2.75rem) * var(--type-scale));
+  --type-4: calc(clamp(1.45rem, 3vw, 2.3rem) * var(--type-scale));
+  --type-5: calc(clamp(1.3rem, 2.6vw, 2rem) * var(--type-scale));
+  --type-6: calc(clamp(1.2rem, 2.2vw, 1.65rem) * var(--type-scale));
 
   /* Hard, near-square corners, as on the reference. */
   --radius-card: 2px;
@@ -95,7 +116,9 @@
     font-weight: 800;
     line-height: 1.04;
     text-transform: uppercase;
-    letter-spacing: 0.012em;
+    /* A little more air than before: Oxanium set smaller needs the letters to
+       breathe, or the reduction reads as cramped rather than as restrained. */
+    letter-spacing: 0.02em;
     color: var(--color-chrome-bright);
     text-wrap: balance;
     /* Last-resort guard for long proper nouns and artist names. */
@@ -120,6 +143,8 @@
 
   @media (max-width: 900px) {
     :root {
+      /* Slightly tighter again on small screens, on top of the global scale. */
+      --type-scale: 0.84;
       --text-h2: 2rem;
       --text-h3: 1.75rem;
       --text-h4: 1.4rem;
@@ -202,6 +227,26 @@
     clip-path: polygon(0 0, calc(100% - var(--chamfer)) 0, 100% var(--chamfer), 100% 100%, 0 100%);
   }
 
+  /* The display ladder. Prefer these over a one-off clamp in a component. */
+  .type-1 {
+    font-size: var(--type-1);
+  }
+  .type-2 {
+    font-size: var(--type-2);
+  }
+  .type-3 {
+    font-size: var(--type-3);
+  }
+  .type-4 {
+    font-size: var(--type-4);
+  }
+  .type-5 {
+    font-size: var(--type-5);
+  }
+  .type-6 {
+    font-size: var(--type-6);
+  }
+
   /* Small uppercase label used above headings site-wide. */
   .eyebrow {
     font-family: var(--font-body);
@@ -216,8 +261,8 @@
     font-family: var(--font-display);
     font-size: var(--text-display);
     font-weight: 800;
-    line-height: 0.98;
-    letter-spacing: 0.008em;
+    line-height: 1;
+    letter-spacing: 0.018em;
     text-transform: uppercase;
     color: var(--color-chrome-bright);
   }
@@ -320,6 +365,24 @@
     opacity: 0.16;
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+}
+
+/* The three bars on the hero's sound control, so its state reads at a glance. */
+@keyframes sound-bar {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@layer utilities {
+  .animate-sound-bar {
+    transform-origin: bottom;
+    animation: sound-bar 0.9s ease-in-out infinite;
   }
 }
 

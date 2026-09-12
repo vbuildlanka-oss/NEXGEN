@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { HeroAudio } from '@/components/home/HeroAudio'
 import { Wordmark } from '@/components/site/Wordmark'
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
 import { gsap, ScrollTrigger } from '@/lib/gsap'
@@ -17,6 +18,8 @@ type Props = {
   mp4Url: string
   webmUrl?: string | null
   posterUrl: string
+  /** Optional soundtrack for the hero. Omitted means no audio at all. */
+  audioUrl?: string | null
   headline: string
   subheadline?: string | null
   scrollHint?: string | null
@@ -42,6 +45,7 @@ export const HeroVideo: React.FC<Props> = ({
   mp4Url,
   webmUrl,
   posterUrl,
+  audioUrl,
   headline,
   subheadline,
   scrollHint,
@@ -50,6 +54,16 @@ export const HeroVideo: React.FC<Props> = ({
   const sectionRef = useRef<HTMLElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const reduced = usePrefersReducedMotion()
+
+  /**
+   * How far through the hero the visitor has scrolled, 0 to 1.
+   *
+   * Held in state purely so the audio can follow it — the visual timeline is
+   * driven by GSAP directly, which never touches React. Rounded to two decimals
+   * to keep this to a few dozen renders across the whole scroll rather than one
+   * per frame.
+   */
+  const [scrollProgress, setScrollProgress] = useState(0)
 
   /* ── autoplay resilience ────────────────────────────────────────────────── */
   useEffect(() => {
@@ -85,10 +99,18 @@ export const HeroVideo: React.FC<Props> = ({
       const letters = section.querySelectorAll<SVGPathElement>('[data-hero-logo] [data-logo-letter]')
 
       if (reduced) {
-        // Leave the video full-bleed and let the page scroll normally.
+        // Leave the video full-bleed and let the page scroll normally, but still
+        // report scroll position so the soundtrack fades on the way out.
         gsap.set([frame, content], { clearProps: 'all' })
         gsap.set(hint, { autoAlpha: 0 })
         gsap.set(letters, { autoAlpha: 1, y: 0 })
+
+        ScrollTrigger.create({
+          trigger: section,
+          start: 'top top',
+          end: 'bottom top',
+          onUpdate: (self) => setScrollProgress(Number(self.progress.toFixed(2))),
+        })
         return
       }
 
@@ -112,6 +134,7 @@ export const HeroVideo: React.FC<Props> = ({
           start: 'top top',
           end: 'bottom bottom',
           scrub: 1,
+          onUpdate: (self) => setScrollProgress(Number(self.progress.toFixed(2))),
         },
       })
 
@@ -240,6 +263,12 @@ export const HeroVideo: React.FC<Props> = ({
             )}
           </div>
         </div>
+
+        {audioUrl && (
+          <div className="pointer-events-none absolute right-[clamp(1.25rem,4vw,4rem)] bottom-5 z-20 flex justify-end">
+            <HeroAudio src={audioUrl} fadeProgress={scrollProgress} />
+          </div>
+        )}
 
         {scrollHint && (
           <div

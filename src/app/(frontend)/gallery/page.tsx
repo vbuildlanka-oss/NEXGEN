@@ -80,7 +80,7 @@ export default async function GalleryPage() {
                 <div key={group.key}>
                   {group.event ? (
                     <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-                      <h2 className="text-[clamp(1.4rem,2.8vw,2.1rem)]">
+                      <h2 className="type-5">
                         {group.event.title}
                       </h2>
                       <div className="flex items-center gap-4 text-small text-chrome-dim">
@@ -94,7 +94,7 @@ export default async function GalleryPage() {
                       </div>
                     </div>
                   ) : (
-                    <h2 className="mb-6 text-[clamp(1.4rem,2.8vw,2.1rem)]">More from the floor</h2>
+                    <h2 className="mb-6 type-5">More from the floor</h2>
                   )}
 
                   <GalleryGrid photos={group.photos} />

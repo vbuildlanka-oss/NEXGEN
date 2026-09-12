@@ -102,7 +102,7 @@ export default async function UpdatesPage({ searchParams }: Search) {
 
       <section className="border-t border-hairline bg-surface">
         <div className="container-site py-[clamp(3rem,7vw,5rem)]">
-          <SplitHeading as="h2" className="text-[clamp(1.6rem,3.2vw,2.4rem)]">
+          <SplitHeading as="h2" className="type-4">
             Never miss an announcement
           </SplitHeading>
           <p className="mt-4 max-w-[52ch] text-chrome">

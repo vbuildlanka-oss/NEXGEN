@@ -37,6 +37,11 @@ const SOURCES = [
 ]
 
 const VIDEO_SOURCE = 'Starting video/IMG_8459.MOV'
+/**
+ * The client supplied this as "snippet2.mp3.mpeg" — an mp3 with a double
+ * extension. Matched loosely so a corrected filename still works.
+ */
+const AUDIO_CANDIDATES = ['snippet2.mp3.mpeg', 'snippet2.mp3', 'snippet.mp3', 'snippet.mp3.mpeg']
 const HERO_DIR = 'public/hero'
 
 /** Long edge of the web master. The CMS resizes down from here. */
@@ -247,12 +252,84 @@ async function processVideo() {
   )
 }
 
+/**
+ * Encodes the hero soundtrack.
+ *
+ * 192 kbps stereo is more than a looping background bed needs; 128 kbps is
+ * transparent at this use and roughly a third smaller. A short fade-in is baked
+ * into the file so the track never starts on a hard transient, however it is
+ * triggered — the scroll-linked fade-out is handled in the browser, where it has
+ * to follow scroll position.
+ */
+async function processAudio() {
+  const ffmpeg = await resolveFfmpeg()
+
+  if (!ffmpeg) {
+    console.warn('! ffmpeg not found, skipping the hero audio')
+    return
+  }
+
+  let input
+
+  for (const candidate of AUDIO_CANDIDATES) {
+    const attempt = path.join(root, candidate)
+    try {
+      await stat(attempt)
+      input = attempt
+      break
+    } catch {
+      // try the next spelling
+    }
+  }
+
+  if (!input) {
+    console.warn(`! no hero audio found (looked for ${AUDIO_CANDIDATES.join(', ')})`)
+    return
+  }
+
+  const outDir = path.join(root, HERO_DIR)
+  await mkdir(outDir, { recursive: true })
+  const output = path.join(outDir, 'hero-audio.mp3')
+
+  console.log(`  encoding hero-audio.mp3 from ${path.basename(input)} …`)
+  await execFileAsync(ffmpeg, [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-i',
+    input,
+    '-c:a',
+    'libmp3lame',
+    '-b:a',
+    '128k',
+    '-ar',
+    '44100',
+    '-ac',
+    '2',
+    // Two-second fade in from the top of the track.
+    '-af',
+    'afade=t=in:st=0:d=2',
+    output,
+  ])
+
+  const before = (await stat(input)).size
+  const after = (await stat(output)).size
+  console.log(
+    `  ${path.relative(root, output)}  ${(before / 1024 / 1024).toFixed(2)} MB → ` +
+      `${(after / 1024 / 1024).toFixed(2)} MB`,
+  )
+}
+
 async function main() {
   console.log('\nProcessing photographs…')
   const { written, skipped } = await processImages()
 
   console.log('\nProcessing hero video…')
   await processVideo()
+
+  console.log('\nProcessing hero audio…')
+  await processAudio()
 
   const manifest = {
     generatedAt: new Date().toISOString(),

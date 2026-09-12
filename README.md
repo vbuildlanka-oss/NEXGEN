@@ -19,6 +19,14 @@ the site can be edited without a developer.
 - **Supabase** Postgres for content, **Cloudflare R2** for image and video files
 - **GSAP** + ScrollTrigger for the scroll-driven homepage
 - **Tailwind CSS 4**, with the brand palette as theme tokens
+- **Lenis** for momentum scrolling, driven from GSAP's ticker
+
+### Adjusting the typography
+
+Every type size derives from `--type-scale` in `src/app/(frontend)/globals.css`.
+Lower it to shrink the whole site's type, raise it to grow it; nothing else needs
+touching. Headings pick a rung from the `--type-1` … `--type-6` ladder rather than
+declaring their own size.
 
 ## Running it locally
 
