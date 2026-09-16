@@ -1,0 +1,32 @@
+# The raw client assets are the photographic and video masters (26–52 MB each,
+# ~1.3 GB total). They are the source for scripts/process-assets.mjs and must
+# never be uploaded to Vercel — only the processed output in assets-web/ and
+# public/ is deployed.
+#
+# NOTE THE LEADING SLASHES. They are essential, not tidiness.
+#
+# Without one, a pattern matches a directory of that name at ANY depth, and the
+# matching is case-insensitive. So a bare "Gallery/" silently also excluded
+# src/components/gallery/, src/app/(frontend)/gallery/ and assets-web/gallery/ —
+# which broke the production build with a module-not-found on GalleryGrid, while
+# the local build was perfectly fine.
+#
+# scripts/check-vercelignore.mjs enforces this; it runs as part of `pnpm verify`.
+/Gallery/
+/Homepage pic combo/
+/Starting video/
+
+# Working folders used while building the site.
+/.research/
+/.scaffold/
+
+# The original logo artwork. The traced SVG in public/brand is what ships.
+/logo.jpeg
+
+# The hero soundtrack master. The encoded copy in public/hero is what ships.
+/snippet2.mp3.mpeg
+
+# Never ship local secrets. Git-ignored already, so this only matters for a
+# `vercel` CLI deploy from a working copy.
+/.env
+/.env.local
