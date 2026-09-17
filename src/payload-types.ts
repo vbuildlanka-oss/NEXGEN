@@ -104,12 +104,18 @@ export interface Config {
   globals: {
     'home-page': HomePage;
     'our-story': OurStory;
+    'events-page': EventsPage;
+    'updates-page': UpdatesPage;
+    'gallery-page': GalleryPage;
     'contact-info': ContactInfo;
     'site-settings': SiteSetting;
   };
   globalsSelect: {
     'home-page': HomePageSelect<false> | HomePageSelect<true>;
     'our-story': OurStorySelect<false> | OurStorySelect<true>;
+    'events-page': EventsPageSelect<false> | EventsPageSelect<true>;
+    'updates-page': UpdatesPageSelect<false> | UpdatesPageSelect<true>;
+    'gallery-page': GalleryPageSelect<false> | GalleryPageSelect<true>;
     'contact-info': ContactInfoSelect<false> | ContactInfoSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
@@ -1170,6 +1176,232 @@ export interface OurStory {
   createdAt?: string | null;
 }
 /**
+ * The wording on the Events page. The events themselves are under Content → Events.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events-page".
+ */
+export interface EventsPage {
+  id: number;
+  /**
+   * The band at the top of the page, over a full-width photograph.
+   */
+  intro?: {
+    /**
+     * The small line above the heading.
+     */
+    eyebrow?: string | null;
+    /**
+     * The large heading. Keep it short — it is set very big.
+     */
+    heading?: string | null;
+    /**
+     * The opening paragraph, set larger than body text. Optional.
+     */
+    standfirst?: string | null;
+    /**
+     * Optional. Leave empty and the page uses the next event's own artwork.
+     */
+    image?: (number | null) | Media;
+  };
+  upcoming?: {
+    heading?: string | null;
+    /**
+     * The word after the number, as in "3 scheduled". The number is counted automatically.
+     */
+    countLabel?: string | null;
+  };
+  /**
+   * Shown in place of the list when there are no upcoming events.
+   */
+  upcomingEmpty?: {
+    heading?: string | null;
+    body?: string | null;
+    /**
+     * Optional link shown after the paragraph.
+     */
+    linkLabel?: string | null;
+    /**
+     * Where that link goes, for example /contact.
+     */
+    linkUrl?: string | null;
+  };
+  /**
+   * This section hides itself automatically until there is a past event.
+   */
+  past?: {
+    eyebrow?: string | null;
+    heading?: string | null;
+    /**
+     * The link across from the heading, which opens the Gallery page.
+     */
+    galleryLinkLabel?: string | null;
+  };
+  seo?: {
+    /**
+     * Shown in the browser tab and in search results. The site name is added automatically.
+     */
+    title?: string | null;
+    /**
+     * The sentence under the title in search results. Aim for 1–2 lines.
+     */
+    description?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * The wording on the Updates page. The posts themselves are under Content → Updates.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "updates-page".
+ */
+export interface UpdatesPage {
+  id: number;
+  /**
+   * The band at the top of the page, over a full-width photograph.
+   */
+  intro?: {
+    /**
+     * The small line above the heading.
+     */
+    eyebrow?: string | null;
+    /**
+     * The large heading. Keep it short — it is set very big.
+     */
+    heading?: string | null;
+    /**
+     * The opening paragraph, set larger than body text. Optional.
+     */
+    standfirst?: string | null;
+    /**
+     * Optional. Leave empty and the page uses the newest post's cover photo.
+     */
+    image?: (number | null) | Media;
+  };
+  /**
+   * The category buttons themselves come from the categories on each post, so they always match.
+   */
+  filters?: {
+    /**
+     * The first button, which clears the filter.
+     */
+    allLabel?: string | null;
+  };
+  /**
+   * Shown when no posts have been published yet.
+   */
+  empty?: {
+    heading?: string | null;
+    body?: string | null;
+    /**
+     * Optional link shown after the paragraph.
+     */
+    linkLabel?: string | null;
+    /**
+     * Where that link goes, for example /contact.
+     */
+    linkUrl?: string | null;
+  };
+  /**
+   * The strip at the foot of the page, under the posts.
+   */
+  outro?: {
+    heading?: string | null;
+    body?: string | null;
+    /**
+     * Optional link shown after the paragraph.
+     */
+    linkLabel?: string | null;
+    /**
+     * Where that link goes, for example /contact.
+     */
+    linkUrl?: string | null;
+  };
+  seo?: {
+    /**
+     * Shown in the browser tab and in search results. The site name is added automatically.
+     */
+    title?: string | null;
+    /**
+     * The sentence under the title in search results. Aim for 1–2 lines.
+     */
+    description?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * The wording on the Gallery page. Which photos appear is set per photo under Content → Images & Videos.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-page".
+ */
+export interface GalleryPage {
+  id: number;
+  /**
+   * The band at the top of the page, over a full-width photograph.
+   */
+  intro?: {
+    /**
+     * The small line above the heading.
+     */
+    eyebrow?: string | null;
+    /**
+     * The large heading. Keep it short — it is set very big.
+     */
+    heading?: string | null;
+    /**
+     * The opening paragraph, set larger than body text. Optional.
+     */
+    standfirst?: string | null;
+    /**
+     * Optional. Leave empty and the page uses the first photograph in the gallery.
+     */
+    image?: (number | null) | Media;
+  };
+  /**
+   * Photos tagged with an event are grouped under that event’s name automatically.
+   */
+  groups?: {
+    /**
+     * The heading over photos that have not been tagged with an event. Always shown last.
+     */
+    untaggedHeading?: string | null;
+    /**
+     * The link beside each event group, which opens that event’s page.
+     */
+    eventLinkLabel?: string | null;
+  };
+  /**
+   * Shown when no photographs have been tagged for the gallery yet.
+   */
+  empty?: {
+    heading?: string | null;
+    body?: string | null;
+    /**
+     * Optional link shown after the paragraph.
+     */
+    linkLabel?: string | null;
+    /**
+     * Where that link goes, for example /contact.
+     */
+    linkUrl?: string | null;
+  };
+  seo?: {
+    /**
+     * Shown in the browser tab and in search results. The site name is added automatically.
+     */
+    title?: string | null;
+    /**
+     * The sentence under the title in search results. Aim for 1–2 lines.
+     */
+    description?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Your contact details, the Contact Us page wording, and the social links used across the whole site including the footer.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1388,6 +1620,131 @@ export interface OurStorySelect<T extends boolean = true> {
         body?: T;
         image?: T;
         pullQuote?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events-page_select".
+ */
+export interface EventsPageSelect<T extends boolean = true> {
+  intro?:
+    | T
+    | {
+        eyebrow?: T;
+        heading?: T;
+        standfirst?: T;
+        image?: T;
+      };
+  upcoming?:
+    | T
+    | {
+        heading?: T;
+        countLabel?: T;
+      };
+  upcomingEmpty?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        linkLabel?: T;
+        linkUrl?: T;
+      };
+  past?:
+    | T
+    | {
+        eyebrow?: T;
+        heading?: T;
+        galleryLinkLabel?: T;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "updates-page_select".
+ */
+export interface UpdatesPageSelect<T extends boolean = true> {
+  intro?:
+    | T
+    | {
+        eyebrow?: T;
+        heading?: T;
+        standfirst?: T;
+        image?: T;
+      };
+  filters?:
+    | T
+    | {
+        allLabel?: T;
+      };
+  empty?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        linkLabel?: T;
+        linkUrl?: T;
+      };
+  outro?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        linkLabel?: T;
+        linkUrl?: T;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-page_select".
+ */
+export interface GalleryPageSelect<T extends boolean = true> {
+  intro?:
+    | T
+    | {
+        eyebrow?: T;
+        heading?: T;
+        standfirst?: T;
+        image?: T;
+      };
+  groups?:
+    | T
+    | {
+        untaggedHeading?: T;
+        eventLinkLabel?: T;
+      };
+  empty?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        linkLabel?: T;
+        linkUrl?: T;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
       };
   updatedAt?: T;
   createdAt?: T;

@@ -15,9 +15,12 @@ import { Posts } from './collections/Posts'
 import { Tickets } from './collections/Tickets'
 import { Users } from './collections/Users'
 import { ContactInfo } from './globals/ContactInfo'
+import { EventsPage } from './globals/EventsPage'
+import { GalleryPage } from './globals/GalleryPage'
 import { HomePage } from './globals/HomePage'
 import { OurStory } from './globals/OurStory'
 import { SiteSettings } from './globals/SiteSettings'
+import { UpdatesPage } from './globals/UpdatesPage'
 import { buildPreviewUrl } from './lib/preview'
 import { resolveAllowedOrigins } from './lib/serverUrl'
 
@@ -34,6 +37,9 @@ function previewPathFor({
   if (globalSlug === 'our-story') return '/our-story'
   if (globalSlug === 'contact-info') return '/contact'
   if (globalSlug === 'home-page') return '/'
+  if (globalSlug === 'events-page') return '/events'
+  if (globalSlug === 'updates-page') return '/updates'
+  if (globalSlug === 'gallery-page') return '/gallery'
 
   const slug = typeof data?.slug === 'string' ? data.slug : ''
 
@@ -226,7 +232,17 @@ export default buildConfig({
     Tickets,
     Users,
   ],
-  globals: [HomePage, OurStory, ContactInfo, SiteSettings],
+  // Listed in the order the pages appear in the site's own navigation, so the
+  // admin sidebar reads the same way round as the website.
+  globals: [
+    HomePage,
+    OurStory,
+    EventsPage,
+    UpdatesPage,
+    GalleryPage,
+    ContactInfo,
+    SiteSettings,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

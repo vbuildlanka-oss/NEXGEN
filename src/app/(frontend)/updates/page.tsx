@@ -5,18 +5,32 @@ import React from 'react'
 
 import { Reveal } from '@/components/motion/Reveal'
 import { SplitHeading } from '@/components/motion/SplitHeading'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PostCard } from '@/components/ui/PostCard'
 import { postCategories } from '@/collections/Posts'
+import { UPDATES_PAGE_COPY } from '@/globals/pageCopy'
 import { asMedia } from '@/lib/media'
-import { getPosts } from '@/lib/queries'
+import { getPosts, getUpdatesPage } from '@/lib/queries'
 
 export const revalidate = 3600
 
-export const metadata: Metadata = {
-  title: 'Updates',
-  description:
-    'News, artist and event announcements, collaborations, milestones and live recordings from NexGen.',
+/**
+ * The wording this page ships with, shared with the global that makes it editable.
+ *
+ * Used for every field, so a cleared field, a global that has never been saved, or a
+ * database read that fails all render real copy rather than a blank heading. Defined
+ * in one place with the field defaults — see the note in globals/pageCopy.ts.
+ */
+const COPY = UPDATES_PAGE_COPY
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getUpdatesPage()
+
+  return {
+    title: page?.seo?.title || COPY.seo.title,
+    description: page?.seo?.description || COPY.seo.description,
+  }
 }
 
 type Search = { searchParams: Promise<{ category?: string }> }
@@ -31,16 +45,20 @@ export default async function UpdatesPage({ searchParams }: Search) {
     ? category
     : undefined
 
-  const posts = await getPosts({ category: validCategory, draft })
+  const [posts, page] = await Promise.all([
+    getPosts({ category: validCategory, draft }),
+    getUpdatesPage({ draft }),
+  ])
+
   const [lead, ...rest] = posts
 
   return (
     <>
       <PageHeader
-        eyebrow="Updates"
-        heading="Everything new"
-        standfirst="Announcements, collaborations, milestones and recordings — as they happen."
-        image={asMedia(lead?.coverImage)}
+        eyebrow={page?.intro?.eyebrow || COPY.intro.eyebrow}
+        heading={page?.intro?.heading || COPY.intro.heading}
+        standfirst={page?.intro?.standfirst || COPY.intro.standfirst}
+        image={asMedia(page?.intro?.image) ?? asMedia(lead?.coverImage)}
       />
 
       <section className="section-pad">
@@ -48,7 +66,11 @@ export default async function UpdatesPage({ searchParams }: Search) {
           {/* Category filter. Plain links rather than JavaScript state, so each
               filter is a real, shareable, crawlable URL. */}
           <nav aria-label="Filter updates" className="mb-10 flex flex-wrap gap-2">
-            <FilterPill href="/updates" active={!validCategory} label="Everything" />
+            <FilterPill
+              href="/updates"
+              active={!validCategory}
+              label={page?.filters?.allLabel || COPY.filters.allLabel}
+            />
             {postCategories.map((option) => (
               <FilterPill
                 key={option.value}
@@ -60,24 +82,27 @@ export default async function UpdatesPage({ searchParams }: Search) {
           </nav>
 
           {posts.length === 0 ? (
-            <div className="border border-hairline bg-surface p-10 text-center">
-              <p className="font-display text-[1.75rem] text-chrome-bright uppercase">
-                Nothing here yet
-              </p>
-              <p className="mt-3 text-chrome">
-                {validCategory ? (
-                  <>
-                    No posts in this category so far —{' '}
-                    <Link href="/updates" className="text-ember underline underline-offset-4">
-                      see everything
-                    </Link>
-                    .
-                  </>
-                ) : (
-                  'The first announcements are on their way.'
-                )}
-              </p>
-            </div>
+            /**
+             * Filtering to an empty category is a different situation from having
+             * published nothing at all, so it keeps its own wording and its own way
+             * out. Only the genuinely-empty case is editable, because the filtered
+             * case has to name the escape route precisely.
+             */
+            validCategory ? (
+              <EmptyState
+                heading={page?.empty?.heading || COPY.empty.heading}
+                body="No posts in this category so far —"
+                linkLabel="see everything"
+                linkUrl="/updates"
+              />
+            ) : (
+              <EmptyState
+                heading={page?.empty?.heading || COPY.empty.heading}
+                body={page?.empty?.body || COPY.empty.body}
+                linkLabel={page?.empty?.linkLabel}
+                linkUrl={page?.empty?.linkUrl}
+              />
+            )
           ) : (
             <div className="flex flex-col gap-6">
               {lead && (
@@ -103,14 +128,16 @@ export default async function UpdatesPage({ searchParams }: Search) {
       <section className="border-t border-hairline bg-surface">
         <div className="container-site py-[clamp(3rem,7vw,5rem)]">
           <SplitHeading as="h2" className="type-4">
-            Never miss an announcement
+            {page?.outro?.heading || COPY.outro.heading}
           </SplitHeading>
           <p className="mt-4 max-w-[52ch] text-chrome">
-            Follow NexGen on social, or{' '}
-            <Link href="/contact" className="text-ember underline underline-offset-4">
-              drop us a message
-            </Link>{' '}
-            to join the mailing list.
+            {page?.outro?.body || COPY.outro.body}{' '}
+            <Link
+              href={page?.outro?.linkUrl || COPY.outro.linkUrl}
+              className="text-ember underline underline-offset-4"
+            >
+              {page?.outro?.linkLabel || COPY.outro.linkLabel}
+            </Link>
           </p>
         </div>
       </section>

@@ -62,6 +62,46 @@ export async function getContactInfo({ draft = false }: QueryOptions = {}) {
   )
 }
 
+/**
+ * The wording on the three listing pages.
+ *
+ * Each returns null if the read fails or the global has never been saved, and every
+ * page supplies its own fallback for each field — so a missing global degrades to
+ * the wording the page shipped with rather than to blank headings.
+ */
+export async function getEventsPage({ draft = false }: QueryOptions = {}) {
+  return safeQuery(
+    'events-page',
+    async () => {
+      const payload = await getPayloadClient()
+      return payload.findGlobal({ slug: 'events-page', depth: 2, draft, overrideAccess: draft })
+    },
+    emptyGlobal,
+  )
+}
+
+export async function getUpdatesPage({ draft = false }: QueryOptions = {}) {
+  return safeQuery(
+    'updates-page',
+    async () => {
+      const payload = await getPayloadClient()
+      return payload.findGlobal({ slug: 'updates-page', depth: 2, draft, overrideAccess: draft })
+    },
+    emptyGlobal,
+  )
+}
+
+export async function getGalleryPage({ draft = false }: QueryOptions = {}) {
+  return safeQuery(
+    'gallery-page',
+    async () => {
+      const payload = await getPayloadClient()
+      return payload.findGlobal({ slug: 'gallery-page', depth: 2, draft, overrideAccess: draft })
+    },
+    emptyGlobal,
+  )
+}
+
 /* ─────────────────────────── homepage panels ───────────────────────────── */
 
 export async function getHomePanels({ draft = false }: QueryOptions = {}): Promise<HomePanel[]> {
