@@ -16,6 +16,32 @@ type MediaSize = {
 }
 
 /**
+ * Makes a stored URL safe to put in a `srcset`.
+ *
+ * `srcset` is parsed by splitting on commas, then reading each candidate's URL up
+ * to the first whitespace and treating the rest as descriptors. So a filename
+ * containing a space silently destroys the candidate: the browser reads
+ * ".../ONEDINETH" as the URL, fails to parse "IMG" as a descriptor, and throws the
+ * whole entry away. A comma is worse — it splits one candidate into two.
+ *
+ * Uploads are slugified now (see lib/uploadFilenames), so new files cannot hit
+ * this. It stays because files uploaded before that guardrail existed are still in
+ * the bucket, and because a URL going into markup should not depend on a hook
+ * having run months earlier.
+ *
+ * Deliberately not `encodeURI`, which would turn an already-encoded "%20" into
+ * "%2520". Only the two characters that are structurally significant are touched.
+ */
+function srcSetSafe(url: string): string {
+  return url.replace(/ /g, '%20').replace(/,/g, '%2C')
+}
+
+/** The same escaping, for any single URL taken off a media document. */
+export function mediaUrl(url: string | null | undefined): string | undefined {
+  return url ? srcSetSafe(url) : undefined
+}
+
+/**
  * Builds a `srcSet` from the variants Payload generated on upload.
  *
  * Using the pre-generated sizes rather than an on-the-fly image optimiser means
@@ -26,13 +52,28 @@ type MediaSize = {
 export function buildSrcSet(media: Media | null): string | undefined {
   if (!media?.sizes) return undefined
 
-  const entries = Object.values(media.sizes as Record<string, MediaSize | undefined>)
-    .filter((size): size is MediaSize => Boolean(size?.url && size?.width))
-    .map((size) => `${size.url} ${size.width}w`)
+  const variants = Object.values(media.sizes as Record<string, MediaSize | undefined>).filter(
+    (size): size is MediaSize & { url: string; width: number } =>
+      Boolean(size?.url && size?.width),
+  )
 
-  // Include the original as the largest candidate so very wide displays are covered.
-  if (media.url && media.width) {
-    entries.push(`${media.url} ${media.width}w`)
+  const entries = variants.map((size) => `${srcSetSafe(size.url)} ${size.width}w`)
+
+  /**
+   * The original is offered only when it is genuinely larger than every variant.
+   *
+   * It used to be appended unconditionally, "so very wide displays are covered" —
+   * but the largest variant is already 2400px, which covers a 1200px slot at 2×.
+   * All the unconditional version actually achieved was handing the browser the
+   * full-size upload as the most attractive candidate on a wide screen: an 838 KB
+   * JPEG in the one case we found. Uploads are now capped at 2400px, so this
+   * branch is reached only by an image too small to have generated a variant at
+   * its own size, which is exactly when the original is worth having.
+   */
+  const widestVariant = variants.reduce((widest, size) => Math.max(widest, size.width), 0)
+
+  if (media.url && media.width && media.width > widestVariant) {
+    entries.push(`${srcSetSafe(media.url)} ${media.width}w`)
   }
 
   return entries.length > 0 ? entries.join(', ') : undefined
@@ -49,7 +90,7 @@ export function pickSrc(media: Media | null): string | undefined {
 
   const sizes = (media.sizes ?? {}) as Record<string, MediaSize | undefined>
 
-  return sizes.wide?.url ?? sizes.hero?.url ?? media.url ?? undefined
+  return mediaUrl(sizes.wide?.url ?? sizes.hero?.url ?? media.url)
 }
 
 export function mediaAlt(media: Media | null, fallback = ''): string {

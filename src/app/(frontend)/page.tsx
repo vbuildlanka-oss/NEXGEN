@@ -10,7 +10,7 @@ import { Reveal } from '@/components/motion/Reveal'
 import { SplitHeading } from '@/components/motion/SplitHeading'
 import { EventCard } from '@/components/ui/EventCard'
 import { PostCard } from '@/components/ui/PostCard'
-import { asMedia, pickSrc } from '@/lib/media'
+import { asMedia, mediaUrl, pickSrc } from '@/lib/media'
 import { getHomePage, getHomePanels, getPosts, getUpcomingEvents } from '@/lib/queries'
 
 /* Rebuilt on demand when content is saved (see src/hooks/revalidate.ts), with an
@@ -50,7 +50,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroVideo
-        mp4Url={heroVideo?.url ?? DEFAULT_HERO.mp4}
+        mp4Url={mediaUrl(heroVideo?.url) ?? DEFAULT_HERO.mp4}
         webmUrl={heroVideo?.url ? null : DEFAULT_HERO.webm}
         posterUrl={pickSrc(heroPoster) ?? DEFAULT_HERO.poster}
         audioUrl={DEFAULT_HERO.audio}

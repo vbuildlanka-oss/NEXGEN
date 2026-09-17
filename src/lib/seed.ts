@@ -37,6 +37,7 @@ import {
   STORY_IMAGES,
   TEASER_IMAGES,
 } from "./sectionImages";
+import { storedFilename } from "./uploadFilenames";
 
 /** Repository root, two levels up from src/lib. */
 const root = path.resolve(
@@ -103,6 +104,12 @@ type MediaSeed = {
 /**
  * Uploads a processed image, or returns the existing document if this filename
  * has already been uploaded — which is what makes the script re-runnable.
+ *
+ * The lookup has to use the name Payload will *store*, not the name on disk. The
+ * Media collection re-encodes originals to WebP, so "hero-poster.jpg" is saved as
+ * "hero-poster.webp"; searching for the source name would never match, and this
+ * function would dutifully re-upload the same file on every run, accumulating a
+ * duplicate per deployment.
  */
 async function upsertMedia(
   payload: Payload,
@@ -110,7 +117,7 @@ async function upsertMedia(
   eventIds: Map<string, number>,
 ): Promise<number | null> {
   const filePath = path.join(root, seed.file);
-  const filename = path.basename(seed.file);
+  const filename = storedFilename(path.basename(seed.file));
 
   if (!existsSync(filePath)) {
     warn(`missing ${seed.file} — run "pnpm assets:process" first`);

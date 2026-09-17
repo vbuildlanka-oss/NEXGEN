@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { buildSrcSet, mediaAlt, pickSrc } from '@/lib/media'
+import { buildSrcSet, mediaAlt, mediaUrl, pickSrc } from '@/lib/media'
 import type { Media } from '@/payload-types'
 
 type Props = {
@@ -86,7 +86,7 @@ export const GalleryGrid: React.FC<Props> = ({ photos, label }) => {
               aria-label={`Open photo${photo.caption ? `: ${photo.caption}` : ''}`}
             >
               <img
-                src={photo.sizes?.card?.url ?? src}
+                src={mediaUrl(photo.sizes?.card?.url) ?? src}
                 srcSet={buildSrcSet(photo)}
                 sizes="(max-width: 768px) 48vw, (max-width: 1100px) 32vw, 24vw"
                 alt={mediaAlt(photo)}

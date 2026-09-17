@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url'
 
 import { anyone, authenticated } from '../access'
 import { revalidateCollection, revalidateCollectionAfterDelete } from '../hooks/revalidate'
+import { slugifyUploadName } from '../lib/uploadFilenames'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -39,6 +40,27 @@ export const Media: CollectionConfig = {
     delete: authenticated,
   },
   hooks: {
+    /**
+     * Rename the incoming file before Payload writes it anywhere.
+     *
+     * This is a guardrail, not a nicety. A photograph dragged in as
+     * "ONEDINETH IMG 188.jpg" gave every generated variant a name containing
+     * spaces, and those names go into a `srcset` attribute where a space
+     * terminates the URL — so the browser could not parse a single candidate and
+     * responsive sizing silently stopped working for that image. Asking two
+     * people to remember a naming convention is not a fix; this is.
+     *
+     * `beforeOperation` is the right place because it runs before the filename is
+     * settled, which no later hook does.
+     */
+    beforeOperation: [
+      ({ req, operation }) => {
+        if (operation !== 'create' && operation !== 'update') return
+        if (!req.file?.name) return
+
+        req.file.name = slugifyUploadName(req.file.name)
+      },
+    ],
     // A newly tagged photo should show up in the gallery straight away.
     afterChange: [revalidateCollection(['/', '/gallery', '/events'])],
     afterDelete: [revalidateCollectionAfterDelete(['/', '/gallery', '/events'])],
@@ -63,6 +85,34 @@ export const Media: CollectionConfig = {
     crop: true,
     adminThumbnail: 'thumbnail',
     mimeTypes: ['image/*', 'video/mp4', 'video/webm'],
+    /**
+     * Re-encode the original itself to WebP, not just the generated variants.
+     *
+     * Without this the uploaded file is kept verbatim, which meant an 838 KB
+     * 2730×4096 JPEG sitting in R2 and being offered to wide displays as the
+     * largest `srcset` candidate. The variants were already WebP; the original was
+     * the one thing still shipping as a JPEG, and it was the biggest file of the
+     * set. Quality 82 matches scripts/process-assets.mjs so an image uploaded
+     * through the admin panel is indistinguishable from one that came through the
+     * asset pipeline.
+     *
+     * Only applies to raster images — sharp never sees the video types allowed
+     * above, and Payload leaves SVG alone.
+     */
+    formatOptions: { format: 'webp', options: { quality: 82 } },
+    /**
+     * Cap the long edge, matching the asset pipeline.
+     *
+     * The client's masters are 60MP. `fit: 'inside'` scales to fit within the box
+     * without distorting, and `withoutEnlargement` means the 2400px files the
+     * pipeline already produces pass through untouched rather than being re-scaled.
+     */
+    resizeOptions: {
+      width: 2400,
+      height: 2400,
+      fit: 'inside',
+      withoutEnlargement: true,
+    },
     // Responsive variants, generated once on upload by sharp and stored
     // alongside the original. WebP keeps them small without a visible quality
     // cost on photography this dark.
