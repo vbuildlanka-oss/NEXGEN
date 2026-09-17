@@ -54,7 +54,7 @@ Plus a `position: sticky` progress bar whose handle width is driven by a separat
 
 **No preloader, confirmed.** The `<video>` tags are `autoplay loop muted playsinline` with the poster frame applied as a CSS `background-image` on the video element itself — so the first frame is painted before a single byte of video arrives. Two sources per video (mp4 + webm) and a **separate mobile encode** swapped by CSS. That is the whole "no loading screen" trick, and we will copy it exactly.
 
-Screenshots I captured for reference are in `.kiro/artifacts/screenshots/` (homepage scroll sequence, an interior page, the overlay menu).
+Screenshots I captured for reference are in `.artifacts/screenshots/` (homepage scroll sequence, an interior page, the overlay menu).
 
 **Interior-page language** (so the whole site matches, per the brief): fixed dark bar — hamburger left, centred wordmark, single accent CTA right; full-height overlay menu (`height: 100svh; padding: 5rem 3rem 6rem`) sliding in from the left over decorative graphic panels; content pages are light near-square cards on the dark base in a 4-column grid, condensed uppercase headings, generous vertical rhythm.
 

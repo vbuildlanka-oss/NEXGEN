@@ -66,3 +66,29 @@ export function isPortrait(media: Media | null): boolean {
   const ratio = mediaRatio(media)
   return typeof ratio === 'number' ? ratio < 1 : false
 }
+
+/**
+ * The editor's focal point, as a CSS `object-position` value.
+ *
+ * Payload's focal point is stored on the document but does nothing on its own —
+ * it is only ever advice for whatever renders the image. Without this, a portrait
+ * photograph placed in a wide frame is cropped from its centre, which on a
+ * standing subject means the crop lands on their chest and takes the head off.
+ * Passing the focal point through as `object-position` is what makes the control
+ * in the admin panel actually change the page.
+ *
+ * Returns undefined when the point is dead centre, so the CSS default stands and
+ * no inline style is emitted for the majority of images.
+ */
+export function focalPosition(media: Media | null): string | undefined {
+  if (!media) return undefined
+
+  const x = typeof media.focalX === 'number' ? media.focalX : 50
+  const y = typeof media.focalY === 'number' ? media.focalY : 50
+
+  if (x === 50 && y === 50) return undefined
+
+  const clamp = (value: number) => Math.min(100, Math.max(0, value))
+
+  return `${clamp(x)}% ${clamp(y)}%`
+}

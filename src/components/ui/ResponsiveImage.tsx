@@ -1,6 +1,14 @@
 import React from 'react'
 
-import { buildSrcSet, mediaAlt, mediaRatio, pickSrc, type MediaLike, asMedia } from '@/lib/media'
+import {
+  buildSrcSet,
+  focalPosition,
+  mediaAlt,
+  mediaRatio,
+  pickSrc,
+  type MediaLike,
+  asMedia,
+} from '@/lib/media'
 
 type Props = {
   media: MediaLike
@@ -38,6 +46,7 @@ export const ResponsiveImage: React.FC<Props> = ({
   if (!doc || !src) return null
 
   const ratio = mediaRatio(doc)
+  const objectPosition = focalPosition(doc)
 
   return (
     <img
@@ -54,6 +63,10 @@ export const ResponsiveImage: React.FC<Props> = ({
       decoding={priority ? 'sync' : 'async'}
       style={{
         ...(reserveSpace && ratio ? { aspectRatio: String(ratio) } : {}),
+        // Honour the focal point set in the admin panel. It only has any effect
+        // where the image is cropped (`object-fit: cover`), which is exactly the
+        // case it exists for; elsewhere it is inert.
+        ...(objectPosition ? { objectPosition } : {}),
         ...style,
       }}
     />

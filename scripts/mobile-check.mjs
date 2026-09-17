@@ -12,7 +12,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:3000'
-const SHOTS = process.env.SHOTS || '/projects/sandbox/.kiro/artifacts/screenshots'
+const SHOTS = process.env.SHOTS || '.artifacts/screenshots'
 const CHROME = process.env.AGENT_BROWSER_EXECUTABLE_PATH || '/usr/local/bin/chrome'
 const PORT = 9333
 

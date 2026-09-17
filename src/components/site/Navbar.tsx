@@ -87,37 +87,15 @@ export const Navbar: React.FC<Props> = ({ navItems, cta, tagline, socials, revea
         style={{ height: 'var(--nav-height)' }}
       >
         <div className="container-site grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4">
-          {/* left — menu trigger */}
-          <button
-            ref={triggerRef}
-            type="button"
-            onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
-            aria-expanded={menuOpen}
-            aria-controls="site-menu"
-            className="group -ml-1 flex w-fit items-center gap-3 p-1 text-chrome-bright transition-colors hover:text-ember"
-          >
-            <span className="relative flex h-5 w-7 flex-col justify-between" aria-hidden>
-              <span
-                className={`h-[2px] w-full origin-center bg-current transition-transform duration-300 ease-[var(--ease-out-quint)] ${
-                  menuOpen ? 'translate-y-[9px] rotate-45' : ''
-                }`}
-              />
-              <span
-                className={`h-[2px] w-full bg-current transition-opacity duration-200 ${
-                  menuOpen ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
-              <span
-                className={`h-[2px] w-full origin-center bg-current transition-transform duration-300 ease-[var(--ease-out-quint)] ${
-                  menuOpen ? '-translate-y-[9px] -rotate-45' : ''
-                }`}
-              />
-            </span>
-            <span className="sr-only">{menuOpen ? 'Close menu' : 'Open menu'}</span>
-            <span className="hidden text-small font-semibold tracking-[0.18em] uppercase sm:inline">
-              {menuOpen ? 'Close' : 'Menu'}
-            </span>
-          </button>
+          {/*
+            left — intentionally empty.
+
+            The menu trigger used to live here, but it has to be on screen from the
+            moment the page loads, and this bar is withheld until the hero has
+            shrunk. It is now a sibling of the header (below), positioned on the
+            same grid so it lands in this cell once the bar catches up with it.
+          */}
+          <div aria-hidden />
 
           {/* centre — the mark, and nothing else */}
           <div className="flex justify-center">
@@ -153,6 +131,89 @@ export const Navbar: React.FC<Props> = ({ navItems, cta, tagline, socials, revea
           </div>
         </div>
       </header>
+
+      {/*
+        The menu trigger, outside the bar.
+
+        Two requirements that pull against each other: the client wants a way into
+        the menu in the top-left corner from the moment the site loads, and the
+        homepage deliberately withholds the navigation bar until the hero video has
+        begun to shrink. A button inside the bar cannot satisfy both — it inherits
+        the bar's `opacity-0 pointer-events-none`.
+
+        So it sits in its own fixed layer above the bar, using the same
+        `container-site` gutter and `--nav-height` row, which puts it at exactly the
+        pixel the bar's left cell would have. When the bar fades in underneath, the
+        button does not move: it simply stops floating over the video and starts
+        reading as the bar's first item. That is the "seamlessly blend" the client
+        asked for, and it costs no animation at all — the seam is hidden by the two
+        being in the same place.
+
+        Chromeless, on instruction: no background, no border, no pill. Only the
+        three solid rules. Over video they would be unreadable on a bright frame, so
+        they carry a shadow instead of a surface — a shadow darkens what is behind
+        the lines without drawing a shape of its own, and it is faded out once the
+        opaque bar is there to do the same job.
+
+        `z-120` puts it above both the bar (110) and the open menu panel (100), so
+        the same control closes what it opened.
+      */}
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 z-120"
+        style={{ height: 'var(--nav-height)' }}
+      >
+        <div className="container-site flex h-full items-center">
+          <button
+            ref={triggerRef}
+            type="button"
+            onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
+            aria-expanded={menuOpen}
+            aria-controls="site-menu"
+            className="group pointer-events-auto -ml-1 flex w-fit cursor-pointer items-center gap-3 border-0 bg-transparent p-1 text-chrome-bright transition-colors hover:text-ember focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ember"
+          >
+            <span
+              className="relative flex h-5 w-7 flex-col justify-between transition-[filter] duration-500"
+              aria-hidden
+              style={{
+                // Only while the button is floating over the hero. Once the bar is
+                // behind it the shadow is redundant, and on the dark bar it would
+                // read as a smudge.
+                filter: visible ? 'none' : 'drop-shadow(0 1px 5px rgba(8,8,8,0.9))',
+              }}
+            >
+              <span
+                className={`h-[2px] w-full origin-center bg-current transition-transform duration-300 ease-[var(--ease-out-quint)] ${
+                  menuOpen ? 'translate-y-[9px] rotate-45' : ''
+                }`}
+              />
+              <span
+                className={`h-[2px] w-full bg-current transition-opacity duration-200 ${
+                  menuOpen ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
+              <span
+                className={`h-[2px] w-full origin-center bg-current transition-transform duration-300 ease-[var(--ease-out-quint)] ${
+                  menuOpen ? '-translate-y-[9px] -rotate-45' : ''
+                }`}
+              />
+            </span>
+            <span className="sr-only">{menuOpen ? 'Close menu' : 'Open menu'}</span>
+            {/*
+              The word appears with the bar, not before it. Over the opening video
+              the corner should be three lines and nothing else; as part of the bar
+              a label is worth having. Width and opacity are both animated so the
+              lines do not jump sideways when it arrives.
+            */}
+            <span
+              className={`hidden overflow-hidden text-small font-semibold tracking-[0.18em] whitespace-nowrap uppercase transition-[max-width,opacity] duration-500 ease-[var(--ease-out-quint)] sm:inline-block ${
+                visible ? 'max-w-24 opacity-100' : 'max-w-0 opacity-0'
+              }`}
+            >
+              {menuOpen ? 'Close' : 'Menu'}
+            </span>
+          </button>
+        </div>
+      </div>
 
       <OverlayMenu open={menuOpen} onClose={closeMenu} navItems={navItems} socials={socials} />
     </>

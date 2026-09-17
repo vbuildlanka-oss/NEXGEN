@@ -5,7 +5,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 BASE="${1:-http://127.0.0.1:3000}"
-SHOTS="${SHOTS:-/projects/sandbox/.kiro/artifacts/screenshots}"
+SHOTS="${SHOTS:-.artifacts/screenshots}"
 mkdir -p "$SHOTS"
 
 if [[ "${START_SERVER:-1}" == "1" ]]; then

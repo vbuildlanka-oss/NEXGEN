@@ -28,6 +28,16 @@ import { fileURLToPath } from "node:url";
 import type { Payload } from "payload";
 import { randomBytes } from "node:crypto";
 
+import {
+  CONTACT_IMAGE,
+  EVENT_IMAGES,
+  GALLERY_ADDITIONS,
+  POST_IMAGES,
+  SHARE_IMAGE,
+  STORY_IMAGES,
+  TEASER_IMAGES,
+} from "./sectionImages";
+
 /** Repository root, two levels up from src/lib. */
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -83,6 +93,11 @@ type MediaSeed = {
   showInGallery?: boolean;
   eventTitle?: string;
   galleryOrder?: number;
+  /**
+   * Vertical focal point, 0–100 from the top. Set on the portraits that end up in
+   * wide frames, where a centred crop would otherwise take the subject's head off.
+   */
+  focalY?: number;
 };
 
 /**
@@ -123,6 +138,8 @@ async function upsertMedia(
       credit: "ONEDINETH",
       showInGallery: seed.showInGallery ?? false,
       galleryOrder: seed.galleryOrder,
+      focalX: 50,
+      focalY: seed.focalY ?? 50,
       event: seed.eventTitle ? (eventIds.get(seed.eventTitle) ?? null) : null,
     },
   });
@@ -229,8 +246,6 @@ const EVENTS = [
       { name: "Shyro", role: "Support" },
       { name: "Nathan & Marlin", role: "Opening" },
     ],
-    cover: "assets-web/gallery/onedineth-img-13.webp",
-    background: "assets-web/gallery/onedineth-img-11.webp",
     body: [
       "PLACEHOLDER COPY — replace this from the admin panel. Ember Nights is the room where NexGen puts a newer name in front of a crowd that came for a headliner, and lets the set speak for itself.",
       "Three spaces, one ticket, and a sound system chosen before the guest list.",
@@ -249,8 +264,6 @@ const EVENTS = [
       { name: "Rider Samuel", role: "Headliner" },
       { name: "Dual Core", role: "Support" },
     ],
-    cover: "assets-web/gallery/onedineth-img-297.webp",
-    background: "assets-web/gallery/onedineth-img-4.webp",
     body: [
       "PLACEHOLDER COPY — replace this from the admin panel. A long set that starts in the dark and finishes with the sun up.",
     ],
@@ -265,7 +278,6 @@ const EVENTS = [
     ticketPrice: 0,
     ticketNote: "PLACEHOLDER — free entry, capacity limited",
     artists: [{ name: "To be announced", role: "Showcase" }],
-    cover: "assets-web/gallery/onedineth-img-83.webp",
     body: [
       "PLACEHOLDER COPY — replace this from the admin panel. Four artists, forty people, no barrier between them.",
     ],
@@ -280,8 +292,6 @@ const EVENTS = [
     city: "Colombo",
     ticketPrice: 2500,
     artists: [{ name: "Devin Jay", role: "Headliner" }, { name: "Shyro" }],
-    cover: "assets-web/gallery/onedineth-img-154.webp",
-    background: "assets-web/gallery/onedineth-img-217.webp",
     body: [
       "PLACEHOLDER COPY — replace this from the admin panel. The first night, the one that proved the idea worked.",
     ],
@@ -300,7 +310,6 @@ const EVENTS = [
       { name: "Dual Core", role: "Headliner" },
       { name: "Rider Samuel" },
     ],
-    cover: "assets-web/gallery/onedineth-img-190.webp",
     body: [
       "PLACEHOLDER COPY — replace this from the admin panel. Sold out in a week, and the reason the next one got bigger.",
     ],
@@ -314,7 +323,6 @@ const POSTS = [
     category: "news",
     excerpt:
       "PLACEHOLDER — a short summary shown on the Updates page and in link previews. Replace from the admin panel.",
-    cover: "assets-web/gallery/onedineth-img-11.webp",
     publishedDaysAgo: 3,
     body: [
       "PLACEHOLDER COPY — this is a sample news post so the Updates page is not empty. Edit or delete it from the admin panel.",
@@ -327,7 +335,6 @@ const POSTS = [
     category: "artist-announcement",
     excerpt:
       "PLACEHOLDER — artist announcements appear in their own section of Updates.",
-    cover: "assets-web/gallery/onedineth-img-13.webp",
     publishedDaysAgo: 9,
     body: [
       "PLACEHOLDER COPY — replace with the real announcement from the admin panel.",
@@ -339,7 +346,6 @@ const POSTS = [
     category: "event-announcement",
     excerpt:
       "PLACEHOLDER — event announcements can be linked to the event itself.",
-    cover: "assets-web/gallery/onedineth-img-161.webp",
     relatedEventSlug: "ember-nights",
     publishedDaysAgo: 14,
     body: ["PLACEHOLDER COPY — replace from the admin panel."],
@@ -349,7 +355,6 @@ const POSTS = [
     slug: "placeholder-studio-collaboration",
     category: "collaboration",
     excerpt: "PLACEHOLDER — for partnerships, venues and label tie-ups.",
-    cover: "assets-web/gallery/onedineth-img-217.webp",
     publishedDaysAgo: 25,
     body: ["PLACEHOLDER COPY — replace from the admin panel."],
   },
@@ -358,7 +363,6 @@ const POSTS = [
     slug: "one-year-of-nexgen",
     category: "milestone",
     excerpt: "PLACEHOLDER — milestones are the story of the company so far.",
-    cover: "assets-web/gallery/onedineth-img-154.webp",
     publishedDaysAgo: 40,
     body: ["PLACEHOLDER COPY — replace from the admin panel."],
   },
@@ -367,7 +371,6 @@ const POSTS = [
     slug: "live-recording-static-rooftop",
     category: "live-recording",
     excerpt: 'PLACEHOLDER — add a link and the card gets a "Listen" button.',
-    cover: "assets-web/gallery/onedineth-img-190.webp",
     externalUrl: "https://example.com/replace-with-the-real-link",
     relatedEventSlug: "static",
     publishedDaysAgo: 46,
@@ -553,17 +556,23 @@ async function seedEvents(payload: Payload): Promise<Map<string, number>> {
     }
 
     // Cover art has to exist before the event that references it.
-    const coverId = seed.cover
+    // Which photograph belongs to which event is decided in sectionImages.ts,
+    // shared with the migration that reassigned them on the live site.
+    const images = EVENT_IMAGES[seed.slug];
+    const coverId = images
       ? await upsertMedia(
           payload,
-          { file: seed.cover, alt: `${seed.title} cover photo` },
+          { ...images.cover, alt: images.cover.alt || `${seed.title} cover photo` },
           ids,
         )
       : null;
-    const backgroundId = seed.background
+    const backgroundId = images?.background
       ? await upsertMedia(
           payload,
-          { file: seed.background, alt: `${seed.title} backdrop` },
+          {
+            ...images.background,
+            alt: images.background.alt || `${seed.title} backdrop`,
+          },
           ids,
         )
       : null;
@@ -618,10 +627,11 @@ async function seedPosts(payload: Payload, eventIds: Map<string, number>) {
 
     if (existing.docs[0]) continue;
 
-    const coverId = seed.cover
+    const image = POST_IMAGES[seed.slug];
+    const coverId = image
       ? await upsertMedia(
           payload,
-          { file: seed.cover, alt: `${seed.title} cover photo` },
+          { ...image, alt: image.alt || `${seed.title} cover photo` },
           eventIds,
         )
       : null;
@@ -754,7 +764,22 @@ async function seedGallery(payload: Payload, eventIds: Map<string, number>) {
     }
   }
 
-  console.log(`  = gallery: ${files.length} photograph(s) published`);
+  /**
+   * The photographs from the newer set that were not needed by a specific section.
+   * They live in assets-web/site rather than assets-web/gallery, so they are added
+   * by name here instead of being picked up by the directory scan above.
+   */
+  for (const [index, image] of GALLERY_ADDITIONS.entries()) {
+    await upsertMedia(
+      payload,
+      { ...image, showInGallery: true, galleryOrder: files.length + index + 1 },
+      eventIds,
+    );
+  }
+
+  console.log(
+    `  = gallery: ${files.length + GALLERY_ADDITIONS.length} photograph(s) published`,
+  );
 }
 
 /**
@@ -800,37 +825,17 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
     eventIds,
   );
 
+  // Shown when a link to the site is pasted into a chat or a social post. Its own
+  // photograph rather than the hero poster, which already appears behind the video.
+  const shareImage = await upsertMedia(payload, SHARE_IMAGE, eventIds);
+
   const storyImages = {
-    intro: await upsertMedia(
-      payload,
-      { file: "assets-web/gallery/onedineth-img-358.webp", alt: "" },
-      eventIds,
-    ),
-    what: await upsertMedia(
-      payload,
-      { file: "assets-web/gallery/onedineth-img-4.webp", alt: "" },
-      eventIds,
-    ),
-    why: await upsertMedia(
-      payload,
-      { file: "assets-web/gallery/onedineth-img-65.webp", alt: "" },
-      eventIds,
-    ),
-    stand: await upsertMedia(
-      payload,
-      { file: "assets-web/gallery/onedineth-img-295.webp", alt: "" },
-      eventIds,
-    ),
-    community: await upsertMedia(
-      payload,
-      { file: "assets-web/gallery/onedineth-img-204.webp", alt: "" },
-      eventIds,
-    ),
-    contact: await upsertMedia(
-      payload,
-      { file: "assets-web/gallery/onedineth-img-162.webp", alt: "" },
-      eventIds,
-    ),
+    intro: await upsertMedia(payload, STORY_IMAGES.intro, eventIds),
+    what: await upsertMedia(payload, STORY_IMAGES.whatIsNexGen, eventIds),
+    why: await upsertMedia(payload, STORY_IMAGES.whyWeStarted, eventIds),
+    stand: await upsertMedia(payload, STORY_IMAGES.whatWeStandFor, eventIds),
+    community: await upsertMedia(payload, STORY_IMAGES.community, eventIds),
+    contact: await upsertMedia(payload, CONTACT_IMAGE, eventIds),
   };
 
   if (
@@ -865,11 +870,7 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
             body: "Upcoming nights, venues and line-ups — plus the archive of everything so far.",
             linkLabel: "See events",
             linkUrl: "/events",
-            image: await upsertMedia(
-              payload,
-              { file: "assets-web/gallery/onedineth-img-13.webp", alt: "" },
-              eventIds,
-            ),
+            image: await upsertMedia(payload, TEASER_IMAGES.events, eventIds),
           },
           {
             eyebrow: "Updates",
@@ -877,11 +878,7 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
             body: "New artists, collaborations, milestones and recordings from the floor.",
             linkLabel: "Read updates",
             linkUrl: "/updates",
-            image: await upsertMedia(
-              payload,
-              { file: "assets-web/gallery/onedineth-img-217.webp", alt: "" },
-              eventIds,
-            ),
+            image: await upsertMedia(payload, TEASER_IMAGES.updates, eventIds),
           },
           {
             eyebrow: "Gallery",
@@ -889,11 +886,7 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
             body: "Photographs from the rooms, the booths and the crowds that filled them.",
             linkLabel: "Open gallery",
             linkUrl: "/gallery",
-            image: await upsertMedia(
-              payload,
-              { file: "assets-web/gallery/onedineth-img-190.webp", alt: "" },
-              eventIds,
-            ),
+            image: await upsertMedia(payload, TEASER_IMAGES.gallery, eventIds),
           },
         ],
       } as never,
@@ -1043,7 +1036,7 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
           defaultTitle: "NexGen Entertainment",
           defaultDescription:
             "NexGen Entertainment champions emerging and established artists — live events, new music and the crowds who find them first.",
-          shareImage: heroPoster,
+          shareImage: shareImage ?? heroPoster,
         },
       } as never,
     });

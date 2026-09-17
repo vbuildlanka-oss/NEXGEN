@@ -56,5 +56,7 @@ agent-browser eval "(()=>{
   })
 })()"
 
-agent-browser screenshot /projects/sandbox/.kiro/artifacts/screenshots/admin-check.png >/dev/null 2>&1
-echo "screenshot: .kiro/artifacts/screenshots/admin-check.png"
+SHOTS="${SHOTS:-.artifacts/screenshots}"
+mkdir -p "$SHOTS"
+agent-browser screenshot "$SHOTS/admin-check.png" >/dev/null 2>&1
+echo "screenshot: $SHOTS/admin-check.png"

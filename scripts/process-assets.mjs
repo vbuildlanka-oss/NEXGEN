@@ -34,6 +34,9 @@ const SOURCES = [
   { from: 'Homepage pic combo/Artist pics', to: 'assets-web/artists' },
   { from: 'Homepage pic combo/Background pics', to: 'assets-web/backgrounds' },
   { from: 'Gallery', to: 'assets-web/gallery' },
+  // The second batch, used to give every section of the site its own photograph
+  // rather than reusing the gallery set.
+  { from: 'New 30 images', to: 'assets-web/site' },
 ]
 
 const VIDEO_SOURCE = 'Starting video/IMG_8459.MOV'

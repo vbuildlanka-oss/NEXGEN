@@ -19,6 +19,29 @@ const ACCENTS: Record<string, string> = {
 }
 
 /**
+ * Where each panel's photograph leads.
+ *
+ * The panels are the site's argument for itself, so each one hands off to the page
+ * that makes good on it: the floor to what is coming up, the booth to artist news,
+ * the rooms to the story of why they are chosen that way, and so on. Seven distinct
+ * destinations, which is why two of them are anchors within Events rather than a
+ * second link to the same page.
+ *
+ * A default rather than a rule: a panel with its own link set in the admin panel
+ * uses that instead, so the client can repoint any of them without touching code.
+ * Keyed by position, and cycled if an eighth panel is ever added.
+ */
+const DESTINATIONS: { label: string; url: string }[] = [
+  { label: 'See what’s on', url: '/events#upcoming' },
+  { label: 'Artist news', url: '/updates' },
+  { label: 'Why these rooms', url: '/our-story' },
+  { label: 'Nights so far', url: '/events#past' },
+  { label: 'Every line-up', url: '/events' },
+  { label: 'Faces from the floor', url: '/gallery' },
+  { label: 'Talk to us', url: '/contact' },
+]
+
+/**
  * The scroll-driven photo canvas.
  *
  * Reproduces the reference site's "pillars" section, whose construction I read
@@ -82,8 +105,11 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
         // panels' headings stay in the document for screen readers.
         gsap.set(backgrounds, { autoAlpha: 0 })
         gsap.set(backgrounds[0], { autoAlpha: 1, yPercent: 0, width: '100%' })
-        gsap.set(foregrounds, { autoAlpha: 0, scale: 1 })
-        gsap.set(foregrounds[0], { autoAlpha: 1 })
+        // `pointerEvents` matters even here: all seven photographs are stacked, and
+        // the six invisible ones would otherwise still intercept the click meant for
+        // the one on show.
+        gsap.set(foregrounds, { autoAlpha: 0, scale: 1, pointerEvents: 'none' })
+        gsap.set(foregrounds[0], { autoAlpha: 1, pointerEvents: 'auto' })
         gsap.set(blocks, { autoAlpha: 0 })
         gsap.set(blocks[0], { autoAlpha: 1 })
         lines.flat().forEach((line) => gsap.set(line, { yPercent: 0 }))
@@ -294,10 +320,14 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
 
         {/* foreground photo + heading layer */}
         <div className="absolute inset-0">
-          {panels.map((panel) => {
+          {panels.map((panel, index) => {
             const artist = asMedia(panel.artistImage)
             const src = pickSrc(artist)
             const accent = ACCENTS[panel.accent ?? 'nexgen-red'] ?? ACCENTS['nexgen-red']
+            const destination =
+              panel.link?.url && panel.link.url.trim().length > 0
+                ? { label: panel.link.label || 'Find out more', url: panel.link.url }
+                : DESTINATIONS[index % DESTINATIONS.length]
 
             return (
               <div
@@ -306,8 +336,22 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                 className="absolute inset-0 flex flex-col items-center justify-center px-[clamp(1rem,4vw,3rem)] will-change-transform"
               >
                 {src && (
-                  <div
-                    className="relative w-[min(78vw,23rem)] overflow-hidden rounded-[12px] border-2 border-ink/70 shadow-[0_30px_60px_-20px_rgba(8,8,8,0.9)]"
+                  /**
+                   * The photograph itself is the link. Only the photograph — the
+                   * heading block below it carries its own link, and nesting one
+                   * anchor inside another is invalid HTML that browsers resolve by
+                   * silently closing the outer one.
+                   *
+                   * `pointer-events` is not set here: the containing
+                   * `[data-canvas-fg]` layer is toggled by the ScrollTrigger above,
+                   * so only the panel currently on screen is clickable. Without
+                   * that, all seven photographs are stacked on top of one another
+                   * and every click would land on the last one.
+                   */
+                  <Link
+                    href={destination.url}
+                    aria-label={`${panel.heading} — ${destination.label}`}
+                    className="group/photo relative block w-[min(78vw,23rem)] overflow-hidden rounded-[12px] border-2 border-ink/70 shadow-[0_30px_60px_-20px_rgba(8,8,8,0.9)] transition-[border-color,box-shadow] duration-300 hover:border-nexgen focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-nexgen"
                     style={{ aspectRatio: '3 / 4' }}
                   >
                     <img
@@ -316,9 +360,34 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                       sizes="(max-width: 768px) 78vw, 23rem"
                       alt={mediaAlt(artist, panel.heading)}
                       loading="lazy"
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover/photo:scale-[1.04]"
                     />
-                  </div>
+                    {/*
+                      The cue that this is clickable, shown rather than hidden behind
+                      a hover: half of the traffic here is on a phone, where hover
+                      does not exist and an invisible link is simply an image.
+                    */}
+                    <span
+                      aria-hidden
+                      /* `bottom-10` clears the heading block, which deliberately
+                         overlaps the foot of the photograph by 2rem. At `bottom-0`
+                         the cue was behind it and effectively invisible. */
+                      className="absolute inset-x-0 bottom-10 flex items-center justify-between gap-2 bg-gradient-to-t from-ink/90 via-ink/60 to-transparent px-4 pt-10 pb-2 text-small font-semibold tracking-[0.16em] text-chrome-bright uppercase transition-colors duration-300 group-hover/photo:text-nexgen"
+                    >
+                      {destination.label}
+                      {/* Drawn rather than typed: the display face has no arrow
+                          glyph, and an "→" in it renders as a missing-character box. */}
+                      <svg
+                        viewBox="0 0 24 12"
+                        className="h-3 w-6 shrink-0 transition-transform duration-300 group-hover/photo:translate-x-1"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                      >
+                        <path d="M0 6h22M17 1l5 5-5 5" />
+                      </svg>
+                    </span>
+                  </Link>
                 )}
 
                 {/* Heading block, overlapping the photo above it — the reference

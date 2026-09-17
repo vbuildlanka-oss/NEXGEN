@@ -8,7 +8,7 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
-SHOTS="${SHOTS:-/projects/sandbox/.kiro/artifacts/screenshots}"
+SHOTS="${SHOTS:-.artifacts/screenshots}"
 BASE="http://127.0.0.1:3000"
 mkdir -p "$SHOTS"
 

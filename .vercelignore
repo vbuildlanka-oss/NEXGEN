@@ -19,6 +19,11 @@
 # Working folders used while building the site.
 /.research/
 /.scaffold/
+/.artifacts/
+
+# The raw masters for the thirty photographs added across the site. Processed
+# into assets-web/site by scripts/process-assets.mjs, which is what ships.
+/New 30 images/
 
 # The original logo artwork. The traced SVG in public/brand is what ships.
 /logo.jpeg
