@@ -366,23 +366,38 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                       The cue that this is clickable, shown rather than hidden behind
                       a hover: half of the traffic here is on a phone, where hover
                       does not exist and an invisible link is simply an image.
+                      
+                      An arrow and nothing else, on instruction. It used to carry the
+                      destination's name — "See what's on", "Faces from the floor" —
+                      which needed a gradient behind it to stay legible over the
+                      photograph. With the words gone the gradient went too: a bare
+                      arrow reads over any frame given a shadow, and a full-width band
+                      to carry one glyph was more furniture than the panel wants.
+                      
+                      The name has not been lost, only made invisible. It is still in
+                      the link's `aria-label` below, which matters more now than it did
+                      before — a screen reader announcing "link, arrow" would be
+                      useless, so it announces the heading and the destination instead.
+                      
+                      `bottom-10` clears the heading block, which deliberately overlaps
+                      the foot of the photograph by 2rem.
                     */}
                     <span
                       aria-hidden
-                      /* `bottom-10` clears the heading block, which deliberately
-                         overlaps the foot of the photograph by 2rem. At `bottom-0`
-                         the cue was behind it and effectively invisible. */
-                      className="absolute inset-x-0 bottom-10 flex items-center justify-between gap-2 bg-gradient-to-t from-ink/90 via-ink/60 to-transparent px-4 pt-10 pb-2 text-small font-semibold tracking-[0.16em] text-chrome-bright uppercase transition-colors duration-300 group-hover/photo:text-nexgen"
+                      className="absolute right-4 bottom-10 text-chrome-bright transition-colors duration-300 group-hover/photo:text-nexgen"
+                      // A shadow rather than a surface, the same reasoning as the menu
+                      // button: it darkens what is behind the stroke without drawing a
+                      // shape of its own.
+                      style={{ filter: 'drop-shadow(0 1px 4px rgba(8,8,8,0.95))' }}
                     >
-                      {destination.label}
                       {/* Drawn rather than typed: the display face has no arrow
                           glyph, and an "→" in it renders as a missing-character box. */}
                       <svg
                         viewBox="0 0 24 12"
-                        className="h-3 w-6 shrink-0 transition-transform duration-300 group-hover/photo:translate-x-1"
+                        className="h-3.5 w-7 transition-transform duration-300 group-hover/photo:translate-x-1"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="1.75"
+                        strokeWidth="2"
                       >
                         <path d="M0 6h22M17 1l5 5-5 5" />
                       </svg>
