@@ -14,8 +14,10 @@
  *
  *   pnpm seed
  *
- * Safe to re-run: existing documents are matched by slug, title or filename and
- * left untouched. Nothing is deleted.
+ * Runs only against an empty database. It matches documents by slug, title or
+ * filename and creates whatever is missing — which on a populated site would mean
+ * recreating anything deleted from the admin panel, so it refuses to run there at
+ * all. See the note on `runSeed`. Nothing is ever deleted.
  *
  * Images come from assets-web/, produced by scripts/process-assets.mjs. Uploading
  * them through Payload means they land wherever storage is configured — Cloudflare
@@ -1051,30 +1053,122 @@ async function seedGlobals(payload: Payload, eventIds: Map<string, number>) {
   console.log("  + globals: homepage, our story, contact, site settings");
 }
 
+export type SeedCounts = {
+  events: number;
+  posts: number;
+  media: number;
+  panels: number;
+  users: number;
+};
+
 export type SeedResult = {
   skipped?: string;
   warnings: string[];
-  counts: {
-    events: number;
-    posts: number;
-    media: number;
-    panels: number;
-    users: number;
-  };
+  counts: SeedCounts;
 };
 
+async function collectCounts(payload: Payload): Promise<SeedCounts> {
+  const [events, posts, media, panels, users] = await Promise.all([
+    payload.count({ collection: "events", overrideAccess: true }),
+    payload.count({ collection: "posts", overrideAccess: true }),
+    payload.count({ collection: "media", overrideAccess: true }),
+    payload.count({ collection: "home-panels", overrideAccess: true }),
+    payload.count({ collection: "users", overrideAccess: true }),
+  ]);
+
+  return {
+    events: events.totalDocs,
+    posts: posts.totalDocs,
+    media: media.totalDocs,
+    panels: panels.totalDocs,
+    users: users.totalDocs,
+  };
+}
+
 /**
- * Loads the placeholder content. Idempotent: anything already present is left
- * exactly as it is, so running this against a site whose content has been edited
- * changes nothing.
+ * Evidence that this site has already been set up, described for a log line.
+ *
+ * Deliberately only events, updates and panels — the three things the seed itself
+ * creates, so all three are present after a successful first run and none of them
+ * appears by any other route.
+ *
+ * Photographs are excluded, and that is not an oversight. Migrations run before the
+ * seed and some of them upload media, so a completely fresh database already holds a
+ * dozen images by the time this is asked. Counting those would make the guard fire on
+ * a brand-new site and leave it with a handful of orphaned photographs, no events and
+ * no homepage. Media is proof that a migration ran, not that the site was populated.
+ *
+ * Users are excluded for the same kind of reason: somebody creating their account at
+ * the first-user screen before the first deploy finishes must not be mistaken for a
+ * populated site, or it would never be seeded at all.
+ *
+ * Note that excluding photographs from the *signal* does not leave them unprotected.
+ * The guard is all or nothing: if any event, update or panel exists the entire seed
+ * is skipped, `seedGallery` included, so a deleted photograph stays deleted too.
+ */
+function describeExistingContent(counts: SeedCounts): string[] {
+  const found: string[] = [];
+
+  if (counts.events) found.push(`${counts.events} event(s)`);
+  if (counts.posts) found.push(`${counts.posts} update(s)`);
+  if (counts.panels) found.push(`${counts.panels} homepage panel(s)`);
+
+  return found;
+}
+
+/**
+ * Loads the placeholder content — but only into a database that has none.
+ *
+ * This used to be described as "idempotent", and that was wrong in a way that cost
+ * the client real work. It skips anything it can *find*, which is not the same as
+ * leaving a site alone: it matches events and updates by slug, panels by their
+ * order and photographs by filename, and creates whatever is missing. So deleting
+ * something from the admin panel left nothing for the next run to find, and the
+ * next deployment dutifully recreated it. Deletions appeared to undo themselves.
+ *
+ * Seeding is therefore now a first-run operation and nothing else. If the database
+ * holds a single event, update, photograph or panel, this returns immediately
+ * without writing anything. That is the whole fix: on a populated site the seed can
+ * no longer resurrect anything, because it no longer runs.
+ *
+ * `force` exists for the one case the guard gets in the way of — a first seed that
+ * failed part-way through, leaving some content behind and the rest missing. Set
+ * SEED_FORCE=1 on the CLI, or pass ?force=1 to the endpoint, and accept that it
+ * will recreate anything currently absent.
  */
 export async function runSeed(
   payload: Payload,
-  { skipUser = false }: { skipUser?: boolean } = {},
+  { skipUser = false, force = false }: { skipUser?: boolean; force?: boolean } = {},
 ): Promise<SeedResult> {
   warnings.length = 0;
 
+  const existing = describeExistingContent(await collectCounts(payload));
+
+  if (existing.length > 0 && !force) {
+    const skipped =
+      `this database already has content (${existing.join(", ")}), and seeding ` +
+      "only ever runs against an empty one";
+
+    console.log(`\nSkipping seed: ${skipped}.\n`);
+    console.log(
+      "  Seeding creates anything it cannot find, so on a populated site it would\n" +
+        "  recreate whatever had been deleted from the admin panel. Deletions are\n" +
+        "  meant to stay deleted, so it stops here.\n",
+    );
+    console.log("  To seed anyway: SEED_FORCE=1 pnpm seed, or POST ?force=1 to the endpoint.\n");
+
+    return { skipped, warnings: [], counts: await collectCounts(payload) };
+  }
+
   console.log("\nSeeding NexGen content…\n");
+
+  if (force && existing.length > 0) {
+    console.log(
+      `  ! SEED_FORCE is set and this database already has content (${existing.join(", ")}).\n` +
+        "    Anything currently missing will be recreated, including documents that\n" +
+        "    were deliberately deleted.\n",
+    );
+  }
 
   await ensureCleanUploadDir(payload);
   await seedAdminUser(payload, skipUser);
@@ -1094,20 +1188,7 @@ export async function runSeed(
   console.log("Globals…");
   await seedGlobals(payload, eventIds);
 
-  const counts = {
-    events: (
-      await payload.count({ collection: "events", overrideAccess: true })
-    ).totalDocs,
-    posts: (await payload.count({ collection: "posts", overrideAccess: true }))
-      .totalDocs,
-    media: (await payload.count({ collection: "media", overrideAccess: true }))
-      .totalDocs,
-    panels: (
-      await payload.count({ collection: "home-panels", overrideAccess: true })
-    ).totalDocs,
-    users: (await payload.count({ collection: "users", overrideAccess: true }))
-      .totalDocs,
-  };
+  const counts = await collectCounts(payload);
 
   console.log("\nDone.", JSON.stringify(counts), "\n");
 

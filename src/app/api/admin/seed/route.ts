@@ -11,11 +11,16 @@ import { runSeed } from '@/lib/seed'
  * work and returns the real error as JSON, so a misconfigured R2 bucket can be
  * identified and fixed without triggering a fresh deployment each time.
  *
- * Idempotent, like the build-time seed: anything already present is left alone, so
- * calling this on a site whose content has been edited changes nothing.
+ * Runs only against an empty database, exactly like the build-time seed. On a site
+ * that already has content it writes nothing and says so — seeding creates whatever
+ * it cannot find, so on a populated site it would recreate anything deleted from the
+ * admin panel.
  *
  *   curl -X POST https://your-site.com/api/admin/seed \
  *     -H "Authorization: Bearer $CRON_SECRET"
+ *
+ * Add ?force=1 to override that guard. Only for recovering a first seed that failed
+ * part-way: on a live site it will bring back deliberately deleted documents.
  */
 
 export const runtime = 'nodejs'
@@ -40,8 +45,22 @@ async function handle(request: NextRequest): Promise<Response> {
   }
 
   try {
+    const force = new URL(request.url).searchParams.get('force') === '1'
+
     const payload = await getPayloadClient()
-    const result = await runSeed(payload, { skipUser: true })
+    const result = await runSeed(payload, { skipUser: true, force })
+
+    if (result.skipped) {
+      return Response.json({
+        ok: true,
+        skipped: result.skipped,
+        counts: result.counts,
+        note:
+          'Nothing was written. Seeding only runs against an empty database, so it ' +
+          'cannot recreate anything you have deleted. Add ?force=1 to override — ' +
+          'only needed to finish a first seed that failed part-way.',
+      })
+    }
 
     return Response.json({
       ok: true,

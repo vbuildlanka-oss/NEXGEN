@@ -37,7 +37,21 @@ async function main() {
     // During a deployment, do not invent an admin account: the generated password
     // would be written into the build log.
     skipUser: process.env.SEED_SKIP_USER === '1',
+    /**
+     * Override the empty-database guard.
+     *
+     * Only for recovering a first seed that failed half-way. On a live site this
+     * recreates anything currently missing, including documents that were deleted
+     * on purpose, so it is deliberately awkward to reach for.
+     */
+    force: process.env.SEED_FORCE === '1',
   })
+
+  if (result.skipped) {
+    // Not a failure: the guard doing its job is the expected outcome of every
+    // deployment after the first.
+    process.exit(0)
+  }
 
   if (result.warnings.length > 0) {
     console.warn(`\nSeeding finished with ${result.warnings.length} warning(s):`)

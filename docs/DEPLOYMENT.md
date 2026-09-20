@@ -349,8 +349,18 @@ your R2 bucket as part of that. Look for it in the build log:
 + globals: homepage, our story, contact, site settings
 ```
 
-It is idempotent: every later deploy checks what already exists and adds nothing,
-so editing content in the admin panel is never overwritten by a deployment.
+**It runs once and never again.** Every later deploy finds content in the database
+and stops without writing anything, logging `Skipping seed:` and what it found.
+
+That guard matters more than it sounds. Seeding creates whatever it cannot find, so
+on a populated site it would treat a deleted event as a missing one and put it back
+— deletions made in the admin panel would undo themselves on the next deployment.
+It therefore refuses to run against a database that holds any event, update,
+photograph or panel.
+
+The consequence worth knowing: **the seed is not a way to restore content.** If you
+delete something and want it back, use the version history on the document, or your
+database backup. Re-deploying will not bring it back, by design.
 
 If the log instead shows `seeding did not complete`, the content is missing but the
 site still deployed. The log will name the cause under `SEEDING FAILED`; it is
@@ -363,6 +373,17 @@ call the seed endpoint directly and it will tell you exactly what went wrong:
 curl -X POST https://your-site.com/api/admin/seed \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
+
+On a site that already has content it will decline, which is the correct answer
+almost every time you call it:
+
+```json
+{"ok":true,"skipped":"this database already has content (5 event(s), …)","counts":{…}}
+```
+
+Add `?force=1` only to finish a first seed that failed part-way through. On a live
+site it recreates everything currently missing, including anything you deleted on
+purpose.
 
 A success looks like:
 
