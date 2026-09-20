@@ -329,6 +329,21 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                 ? { label: panel.link.label || 'Find out more', url: panel.link.url }
                 : DESTINATIONS[index % DESTINATIONS.length]
 
+            /**
+             * Whether this panel already shows a written link of its own, in the
+             * heading block below the photograph.
+             *
+             * Only panels with a Link set in the admin panel do — currently just the
+             * seventh — and on those the arrow on the photograph was a second arrow
+             * saying the same thing twice. So the photograph keeps its link but drops
+             * its cue, and the written link speaks for the panel.
+             *
+             * Derived rather than hardcoded to the seventh panel: the duplication
+             * follows the CMS field, so filling that field in on another panel would
+             * otherwise reintroduce exactly this bug there.
+             */
+            const hasWrittenLink = Boolean(panel.link?.label && panel.link?.url)
+
             return (
               <div
                 key={`fg-${panel.id}`}
@@ -382,26 +397,28 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                       `bottom-10` clears the heading block, which deliberately overlaps
                       the foot of the photograph by 2rem.
                     */}
-                    <span
-                      aria-hidden
-                      className="absolute right-4 bottom-10 text-chrome-bright transition-colors duration-300 group-hover/photo:text-nexgen"
-                      // A shadow rather than a surface, the same reasoning as the menu
-                      // button: it darkens what is behind the stroke without drawing a
-                      // shape of its own.
-                      style={{ filter: 'drop-shadow(0 1px 4px rgba(8,8,8,0.95))' }}
-                    >
-                      {/* Drawn rather than typed: the display face has no arrow
-                          glyph, and an "→" in it renders as a missing-character box. */}
-                      <svg
-                        viewBox="0 0 24 12"
-                        className="h-3.5 w-7 transition-transform duration-300 group-hover/photo:translate-x-1"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                    {!hasWrittenLink && (
+                      <span
+                        aria-hidden
+                        className="absolute right-4 bottom-10 text-chrome-bright transition-colors duration-300 group-hover/photo:text-nexgen"
+                        // A shadow rather than a surface, the same reasoning as the menu
+                        // button: it darkens what is behind the stroke without drawing a
+                        // shape of its own.
+                        style={{ filter: 'drop-shadow(0 1px 4px rgba(8,8,8,0.95))' }}
                       >
-                        <path d="M0 6h22M17 1l5 5-5 5" />
-                      </svg>
-                    </span>
+                        {/* Drawn rather than typed: the display face has no arrow
+                            glyph, and an "→" in it renders as a missing-character box. */}
+                        <svg
+                          viewBox="0 0 24 12"
+                          className="h-3.5 w-7 transition-transform duration-300 group-hover/photo:translate-x-1"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M0 6h22M17 1l5 5-5 5" />
+                        </svg>
+                      </span>
+                    )}
                   </Link>
                 )}
 
@@ -436,7 +453,7 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                     >
                       {panel.heading}
                     </h2>
-                    {panel.link?.label && panel.link?.url && (
+                    {hasWrittenLink && panel.link?.url && (
                       <Link
                         href={panel.link.url}
                         className="mt-3 inline-flex items-center gap-2 border-b-2 border-ink/40 pb-0.5 font-display text-[1.1rem] uppercase text-ink transition-colors hover:border-ink"
