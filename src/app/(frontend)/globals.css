@@ -95,6 +95,21 @@
   :root {
     --nav-height: 5.25rem;
     --announcement-height: 0rem;
+
+    /**
+     * How much scrolling each homepage panel costs.
+     *
+     * The photo canvas is `panels × this` tall. It was a flat 100svh, which meant a
+     * whole screen of scrolling to advance one panel and seven screens to get past
+     * the section — the client reported it as too much work. At 66svh the wipe still
+     * has room to read as a deliberate transition rather than a jump, while a third
+     * less scrolling gets you through.
+     *
+     * A variable rather than a number in PhotoCanvas so it can differ by viewport
+     * without the component measuring anything, and so it can be tuned in one place.
+     */
+    --canvas-panel-track: 66svh;
+
     color-scheme: dark;
   }
 
@@ -164,6 +179,9 @@
       --text-body-lg: 1.125rem;
       --text-body: 1rem;
       --nav-height: 4.25rem;
+      /* Shorter again on phones, where the same distance is far more thumb work and
+         the narrowing half of the wipe is skipped anyway. */
+      --canvas-panel-track: 56svh;
     }
   }
 

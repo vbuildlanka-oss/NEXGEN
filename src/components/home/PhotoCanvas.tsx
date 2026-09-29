@@ -57,14 +57,18 @@ const DESTINATIONS: { label: string; url: string }[] = [
  *     fixed-duration timeline per panel; that snapped when scrolled quickly, so
  *     this tracks scroll position directly instead.
  *   • The panel change is a vertical reel wipe, not a cross-fade: the incoming
- *     background travels `y: 110% → 0%` while its width goes `80% → 100%`, so it
+ *     background travels `y: 110% → 0%` while `scaleX` goes `0.8 → 1`, so it
  *     appears to widen into place as it arrives. The foreground photo scales up
- *     from zero and the heading's lines rise out of a mask.
+ *     from zero and the heading's lines rise out of a mask. Both are transforms on
+ *     purpose — an earlier version animated `width`, which reflowed the page on
+ *     every frame of the scrub.
  *   • A progress bar tracking scroll position through the whole section.
  *
- * The scroll length is `panels.length × 100svh`, so adding an eighth panel in the
- * admin panel lengthens the section automatically — nothing here is hard-coded
- * to seven, including the timeline, which is built from the panel count.
+ * The scroll length is `panels.length × --canvas-panel-track`, so adding an eighth
+ * panel in the admin panel lengthens the section automatically — nothing here is
+ * hard-coded to seven, including the timeline, which is built from the panel count.
+ * That track is shorter on phones than on desktops, which is the whole reason it is
+ * a CSS variable rather than a number in this file.
  */
 export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
   const sectionRef = useRef<HTMLElement | null>(null)
@@ -84,9 +88,38 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
 
       const reduced = prefersReducedMotion()
       const isDesktop = window.matchMedia('(min-width: 992px)').matches
-      // The width the outgoing/incoming background narrows to. On phones the
-      // narrowing reads as a glitch rather than a flourish, so it is skipped.
-      const restingWidth = isDesktop ? '80%' : '100%'
+      // How far the outgoing/incoming background narrows. On phones the narrowing
+      // reads as a glitch rather than a flourish, so it is skipped — which also
+      // means phones do no horizontal work at all during the wipe.
+      const restingScale = isDesktop ? 0.8 : 1
+
+      /**
+       * Keep only the panels that can actually be seen in the layer tree.
+       *
+       * Every background is a full-viewport image carrying a brightness/contrast
+       * filter, and the wipe moves them with `yPercent` rather than fading them — so
+       * all seven stayed "visible" as far as the browser was concerned, and it kept
+       * seven filtered full-screen rasters alive for the whole section. That is the
+       * single biggest reason this felt heavy on a phone.
+       *
+       * At most three can matter at once: the one on screen, the one arriving and
+       * the one leaving. The rest are hidden outright, which drops them from
+       * compositing entirely.
+       *
+       * The foregrounds need no equivalent — they animate `autoAlpha`, and GSAP sets
+       * `visibility: hidden` at zero opacity for free.
+       */
+      let lastShown = -1
+
+      const showOnly = (active: number) => {
+        if (active === lastShown) return
+        lastShown = active
+
+        backgrounds.forEach((background, index) => {
+          background.style.visibility =
+            index >= active - 1 && index <= active + 1 ? 'visible' : 'hidden'
+        })
+      }
 
       /* ── split each heading into masked lines ───────────────────────────── */
       const splits = headings.map(
@@ -104,7 +137,7 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
         // No scroll animation: show the first panel and leave it. The remaining
         // panels' headings stay in the document for screen readers.
         gsap.set(backgrounds, { autoAlpha: 0 })
-        gsap.set(backgrounds[0], { autoAlpha: 1, yPercent: 0, width: '100%' })
+        gsap.set(backgrounds[0], { autoAlpha: 1, yPercent: 0, scaleX: 1 })
         // `pointerEvents` matters even here: all seven photographs are stacked, and
         // the six invisible ones would otherwise still intercept the click meant for
         // the one on show.
@@ -117,8 +150,9 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
       }
 
       /* ── initial state ─────────────────────────────────────────────────── */
-      gsap.set(backgrounds.slice(1), { yPercent: 110, width: restingWidth })
-      gsap.set(backgrounds[0], { yPercent: 0, width: '100%' })
+      gsap.set(backgrounds.slice(1), { yPercent: 110, scaleX: restingScale })
+      gsap.set(backgrounds[0], { yPercent: 0, scaleX: 1 })
+      showOnly(0)
       gsap.set(foregrounds, { scale: 0, autoAlpha: 0, pointerEvents: 'none' })
       gsap.set(foregrounds[0], { pointerEvents: 'auto' })
       lines.forEach((panelLines, index) => {
@@ -132,7 +166,7 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
             trigger: section,
             start: 'top 65%',
             end: 'top 5%',
-            scrub: 1,
+            scrub: 0.45,
           },
         })
         .fromTo(backgrounds[0], { yPercent: 8, autoAlpha: 0.25 }, { yPercent: 0, autoAlpha: 1 }, 0)
@@ -147,15 +181,27 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
        *
        * Now there is a single timeline scrubbed against scroll position, so the
        * panels track the scroll exactly — scroll slowly and they move slowly;
-       * stop halfway and they stay halfway. `scrub: 1` adds a one-second catch-up
-       * so the motion glides rather than tracking the wheel one-to-one.
+       * stop halfway and they stay halfway. The `scrub` value below is the catch-up
+       * that makes the motion glide rather than tracking the wheel one-to-one.
        *
-       * Each panel gets a segment one unit long: it holds still for the first
-       * part, then hands over to the next panel. The hold is what stops the
-       * section feeling like a continuous blur.
+       * Each panel gets a segment one unit long, split evenly: it holds still for
+       * the first half, then hands over. The hold is what stops the section reading
+       * as one continuous blur. That unit is now worth less scrolling than it was —
+       * the segment count is unchanged, the track it is mapped onto is shorter.
        */
-      const HOLD = 0.55
-      const MOVE = 0.45
+      const HOLD = 0.5
+      const MOVE = 0.5
+
+      /**
+       * Writes straight to the transform without allocating a tween.
+       *
+       * The progress bar previously created a `gsap.to()` on every scroll update —
+       * a new tween, several times a second, each one immediately superseded by the
+       * next. A quickSetter is a pre-resolved write to the same property.
+       */
+      const setProgress = progress ? gsap.quickSetter(progress, 'scaleX') : null
+
+      const lastPanel = panels.length - 1
 
       const master = gsap.timeline({
         defaults: { ease: 'none' },
@@ -163,7 +209,32 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
           trigger: section,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 1,
+          /**
+           * Was 1. A full second of catch-up on top of Lenis's own ~1s of momentum
+           * stacked into roughly two seconds between moving the wheel and the
+           * animation settling, which does not read as smoothness — it reads as lag.
+           * Enough to glide, not enough to trail.
+           */
+          scrub: 0.45,
+          /**
+           * One callback for everything that depends on scroll position, rather than
+           * two more ScrollTriggers over the identical range. Both of the triggers
+           * this replaces used `start: 'top top'` and `end: 'bottom bottom'` — the
+           * same span as this timeline — so they were three separate subscriptions
+           * recomputing the same progress on every scroll event.
+           */
+          onUpdate: (self) => {
+            const active = Math.min(lastPanel, Math.round(self.progress * lastPanel))
+
+            showOnly(active)
+            setProgress?.(self.progress)
+
+            // Only the panel on screen may be clicked. This cannot come from the
+            // timeline: a scrubbed tween has no notion of having "arrived".
+            foregrounds.forEach((foreground, index) => {
+              foreground.style.pointerEvents = index === active ? 'auto' : 'none'
+            })
+          },
         },
       })
 
@@ -177,7 +248,7 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
           // Outgoing panel leaves upward and narrows again.
           .to(
             backgrounds[outgoing],
-            { yPercent: -110, width: restingWidth, duration: MOVE },
+            { yPercent: -110, scaleX: restingScale, duration: MOVE },
             at,
           )
           .to(foregrounds[outgoing], { scale: 0, autoAlpha: 0, duration: MOVE }, at)
@@ -185,8 +256,8 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
           // Incoming panel arrives from below, widening as it lands.
           .fromTo(
             backgrounds[index],
-            { yPercent: 110, width: restingWidth },
-            { yPercent: 0, width: '100%', duration: MOVE },
+            { yPercent: 110, scaleX: restingScale },
+            { yPercent: 0, scaleX: 1, duration: MOVE },
             at,
           )
           .fromTo(
@@ -202,38 +273,6 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
             at + MOVE * 0.2,
           )
       })
-
-      /**
-       * Only the panel currently on screen should be clickable, and that cannot
-       * come from the timeline — a scrubbed tween has no notion of "arrived".
-       */
-      ScrollTrigger.create({
-        trigger: section,
-        start: 'top top',
-        end: 'bottom bottom',
-        onUpdate: (self) => {
-          const active = Math.min(
-            panels.length - 1,
-            Math.round(self.progress * (panels.length - 1)),
-          )
-
-          foregrounds.forEach((foreground, index) => {
-            foreground.style.pointerEvents = index === active ? 'auto' : 'none'
-          })
-        },
-      })
-
-      /* ── progress bar ──────────────────────────────────────────────────── */
-      if (progress) {
-        ScrollTrigger.create({
-          trigger: section,
-          start: 'top top',
-          end: 'bottom bottom',
-          onUpdate: (self) => {
-            gsap.to(progress, { scaleX: self.progress, ease: 'none', duration: 0.15 })
-          },
-        })
-      }
 
       /* ── re-measure once the photography has decoded ───────────────────── */
       const images = Array.from(section.querySelectorAll('img'))
@@ -265,7 +304,16 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
       ref={sectionRef}
       aria-label="Inside a NexGen night"
       className="relative bg-ink"
-      style={{ height: `${panels.length * 100}svh` }}
+      /**
+       * How much scrolling the section costs.
+       *
+       * A CSS variable rather than a number here, so the track can be shorter on a
+       * phone than on a desktop without this component knowing anything about
+       * viewport width — see `--canvas-panel-track` in globals.css. It used to be a
+       * flat 100svh per panel, which meant a full screen of scrolling to advance one
+       * panel and seven screens to get past the section.
+       */
+      style={{ height: `calc(${panels.length} * var(--canvas-panel-track))` }}
     >
       <div className="sticky top-0 h-[100svh] overflow-hidden">
         {/* background canvas layer */}
@@ -280,22 +328,39 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
                 className="absolute inset-0 flex items-center justify-center overflow-hidden"
               >
                 {src && (
-                  <img
-                    data-canvas-bg
-                    src={src}
-                    srcSet={buildSrcSet(background)}
-                    sizes="100vw"
-                    alt=""
-                    aria-hidden
-                    // The first two panels are needed almost immediately; the
-                    // rest can wait until the visitor scrolls toward them.
-                    loading={index < 2 ? 'eager' : 'lazy'}
-                    fetchPriority={index === 0 ? 'high' : 'auto'}
-                    className="h-full w-full object-cover"
-                    /* A touch more contrast and light, so the stage detail in
-                       these very dark frames survives being a background. */
-                    style={{ filter: 'brightness(1.18) contrast(1.06)' }}
-                  />
+                  /**
+                   * The wipe moves this wrapper, not the image.
+                   *
+                   * It used to animate the image's own `width` from 80% to 100% to
+                   * get the "widening into place" effect. That is a layout property:
+                   * every scrubbed frame forced a reflow, and because the image is
+                   * `object-cover` it also re-fitted and re-rasterised the photograph
+                   * — sixty times a second, on a full-screen image. Moving the
+                   * animation to a wrapper and using `scaleX` makes the whole wipe
+                   * transform-only, so it runs on the compositor and never touches
+                   * layout. The visual difference is that the frame squashes rather
+                   * than re-crops, which is imperceptible at the speed it travels.
+                   */
+                  <div data-canvas-bg className="absolute inset-0">
+                    <img
+                      src={src}
+                      srcSet={buildSrcSet(background)}
+                      sizes="100vw"
+                      alt=""
+                      aria-hidden
+                      // The first two panels are needed almost immediately; the
+                      // rest can wait until the visitor scrolls toward them.
+                      loading={index < 2 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
+                      className="h-full w-full object-cover"
+                      /* A touch more contrast and light, so the stage detail in
+                         these very dark frames survives being a background. This
+                         filter is why the visibility gating in the effect above
+                         matters: seven full-screen filtered images kept in the layer
+                         tree at once is what made phones struggle. */
+                      style={{ filter: 'brightness(1.18) contrast(1.06)' }}
+                    />
+                  </div>
                 )}
                 {/* Darkens the canvas so the foreground photo and heading hold. */}
                 {/* Legibility scrim. Kept deliberately light: the client's
@@ -348,7 +413,12 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
               <div
                 key={`fg-${panel.id}`}
                 data-canvas-fg
-                className="absolute inset-0 flex flex-col items-center justify-center px-[clamp(1rem,4vw,3rem)] will-change-transform"
+                /* No `will-change` here. It was on all seven of these permanently,
+                   which asks the browser to hold seven promoted layers for the life
+                   of the page — real memory pressure on a phone, for no benefit:
+                   GSAP promotes what it is animating anyway, and six of the seven are
+                   hidden by `autoAlpha` at any given moment. */
+                className="absolute inset-0 flex flex-col items-center justify-center px-[clamp(1rem,4vw,3rem)]"
               >
                 {src && (
                   /**

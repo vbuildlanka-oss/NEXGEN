@@ -79,7 +79,13 @@ export const Navbar: React.FC<Props> = ({ navItems, cta, tagline, socials, revea
     <>
       <header
         data-navbar
-        className={`fixed inset-x-0 top-0 z-110 border-b bg-ink/95 backdrop-blur-md transition-[transform,opacity] duration-500 ease-[var(--ease-out-quint)] ${
+        /* `backdrop-blur-md` used to sit here, behind `bg-ink/95`. At 95% opacity
+           there is almost nothing left to blur, so it was an invisible effect that
+           still cost a full-screen backdrop filter on every frame of every scroll —
+           the bar is fixed, so the content moving underneath it forced the blur to be
+           recomputed continuously. Removing it is free on the eye and noticeable on a
+           phone. */
+        className={`fixed inset-x-0 top-0 z-110 border-b bg-ink/95 transition-[transform,opacity] duration-500 ease-[var(--ease-out-quint)] ${
           visible
             ? 'translate-y-0 opacity-100'
             : 'pointer-events-none -translate-y-full opacity-0'

@@ -38,9 +38,17 @@ export function SmoothScroll() {
     if (prefersReducedMotion()) return
 
     const lenis = new Lenis({
-      // Slightly longer than the default, which suits the deliberate pace of the
-      // pinned sections without feeling sluggish on ordinary pages.
-      duration: 1.05,
+      /**
+       * Was 1.05, and that was too much.
+       *
+       * The scrubbed sections add their own catch-up on top of this, so the two
+       * compounded: about a second of momentum here, plus another second of scrub in
+       * the photo canvas, meant roughly two seconds between moving the wheel and the
+       * animation settling. Past a certain point that stops reading as smoothness and
+       * starts reading as the page being behind you — which is what was reported as
+       * lag. Still interpolated, just closer to the input.
+       */
+      duration: 0.8,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       // Native scrolling on touch — see the note above.
