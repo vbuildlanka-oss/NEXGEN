@@ -3,7 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { anyone, authenticated } from '../access'
-import { revalidateCollection, revalidateCollectionAfterDelete } from '../hooks/revalidate'
+import { revalidateSiteAfterChange, revalidateSiteAfterDelete } from '../hooks/revalidate'
 import { slugifyUploadName } from '../lib/uploadFilenames'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -61,9 +61,10 @@ export const Media: CollectionConfig = {
         req.file.name = slugifyUploadName(req.file.name)
       },
     ],
-    // A newly tagged photo should show up in the gallery straight away.
-    afterChange: [revalidateCollection(['/', '/gallery', '/events'])],
-    afterDelete: [revalidateCollectionAfterDelete(['/', '/gallery', '/events'])],
+    // Every page, not a hand-picked list: a photo can appear on any of them, and
+    // the old list missed the individual event pages. See revalidateSite.
+    afterChange: [revalidateSiteAfterChange],
+    afterDelete: [revalidateSiteAfterDelete],
   },
   upload: {
     /**

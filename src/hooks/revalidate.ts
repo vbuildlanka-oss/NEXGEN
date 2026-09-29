@@ -67,6 +67,42 @@ export const revalidateCollectionAfterDelete =
     return doc
   }
 
+/**
+ * Refreshes every public page.
+ *
+ * For media. A photograph can appear almost anywhere — an event's photo set and
+ * cover, an update's cover, the Our Story chapters, the contact page, the homepage
+ * panels and teasers, the share image in every page's metadata. Listing the paths
+ * by hand is what went wrong: the list was `/`, `/gallery` and `/events`, so a photo
+ * tagged to an event appeared on the gallery but never on that event's own page, and
+ * deleting a photo left the event page pointing at a file that no longer existed —
+ * a black gap where the image had been.
+ *
+ * Working out precisely which pages reference a given image would mean querying
+ * every collection and global on each save. The site has around twenty pages and
+ * regenerating them on demand is cheap, so the correct answer is also the simple
+ * one: an image changed, refresh everything.
+ */
+async function revalidateSite(): Promise<void> {
+  try {
+    const { revalidatePath } = await import('next/cache')
+    revalidatePath('/', 'layout')
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    console.warn(`[revalidate] skipped for the whole site — ${reason}`)
+  }
+}
+
+export const revalidateSiteAfterChange: CollectionAfterChangeHook = async ({ doc }) => {
+  await revalidateSite()
+  return doc
+}
+
+export const revalidateSiteAfterDelete: CollectionAfterDeleteHook = async ({ doc }) => {
+  await revalidateSite()
+  return doc
+}
+
 export const revalidateGlobal =
   (paths: string[]): GlobalAfterChangeHook =>
   async ({ doc }) => {
