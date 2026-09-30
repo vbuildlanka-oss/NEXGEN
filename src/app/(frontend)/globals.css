@@ -108,7 +108,7 @@
      * A variable rather than a number in PhotoCanvas so it can differ by viewport
      * without the component measuring anything, and so it can be tuned in one place.
      */
-    --canvas-panel-track: 83svh;
+    --canvas-panel-track: 90svh;
 
     color-scheme: dark;
   }
@@ -181,7 +181,7 @@
       --nav-height: 4.25rem;
       /* Shorter on phones, where the same distance is more thumb work. Midpoint of
          the original 100svh and the too-fast 56svh. */
-      --canvas-panel-track: 78svh;
+      --canvas-panel-track: 85svh;
     }
   }
 
