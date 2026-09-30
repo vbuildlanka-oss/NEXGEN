@@ -166,7 +166,7 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
             trigger: section,
             start: 'top 65%',
             end: 'top 5%',
-            scrub: 0.45,
+            scrub: 0.7,
           },
         })
         .fromTo(backgrounds[0], { yPercent: 8, autoAlpha: 0.25 }, { yPercent: 0, autoAlpha: 1 }, 0)
@@ -189,8 +189,9 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
        * as one continuous blur. That unit is now worth less scrolling than it was —
        * the segment count is unchanged, the track it is mapped onto is shorter.
        */
-      const HOLD = 0.5
-      const MOVE = 0.5
+      // Midpoint of the original 0.55/0.45 split and the 0.5/0.5 that followed.
+      const HOLD = 0.52
+      const MOVE = 0.48
 
       /**
        * Writes straight to the transform without allocating a tween.
@@ -210,12 +211,11 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
           start: 'top top',
           end: 'bottom bottom',
           /**
-           * Was 1. A full second of catch-up on top of Lenis's own ~1s of momentum
-           * stacked into roughly two seconds between moving the wheel and the
-           * animation settling, which does not read as smoothness — it reads as lag.
-           * Enough to glide, not enough to trail.
+           * The catch-up between scroll input and the animation. 1 felt laggy; 0.45
+           * made the panels snap along too eagerly. 0.7 is the midpoint the client
+           * asked for — this section only; the rest of the site is unaffected.
            */
-          scrub: 0.45,
+          scrub: 0.7,
           /**
            * One callback for everything that depends on scroll position, rather than
            * two more ScrollTriggers over the identical range. Both of the triggers
