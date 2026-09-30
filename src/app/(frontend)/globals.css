@@ -101,14 +101,16 @@
      *
      * The photo canvas is `panels × this` tall. It was a flat 100svh, which meant a
      * whole screen of scrolling to advance one panel and seven screens to get past
-     * the section — the client reported it as too much work. At 66svh the wipe still
-     * has room to read as a deliberate transition rather than a jump, while a third
-     * less scrolling gets you through.
+     * the section — the client reported it as too much work. It then went to 66svh,
+     * which overshot the other way: each wipe ran over a third of a screen, so a
+     * single flick of the wheel threw panels past faster than they could be read.
+     * 83svh sits halfway between the two — still noticeably less scrolling than
+     * the original, with enough room for each transition to feel deliberate.
      *
      * A variable rather than a number in PhotoCanvas so it can differ by viewport
      * without the component measuring anything, and so it can be tuned in one place.
      */
-    --canvas-panel-track: 66svh;
+    --canvas-panel-track: 83svh;
 
     color-scheme: dark;
   }
@@ -180,8 +182,9 @@
       --text-body: 1rem;
       --nav-height: 4.25rem;
       /* Shorter again on phones, where the same distance is far more thumb work and
-         the narrowing half of the wipe is skipped anyway. */
-      --canvas-panel-track: 56svh;
+         the narrowing half of the wipe is skipped anyway. Halfway between the
+         original 100svh and the 56svh that proved too quick. */
+      --canvas-panel-track: 78svh;
     }
   }
 

@@ -166,7 +166,9 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
             trigger: section,
             start: 'top 65%',
             end: 'top 5%',
-            scrub: 0.45,
+            // Matches the master timeline below, so the entrance and the panels
+            // that follow it glide at the same rate.
+            scrub: 0.7,
           },
         })
         .fromTo(backgrounds[0], { yPercent: 8, autoAlpha: 0.25 }, { yPercent: 0, autoAlpha: 1 }, 0)
@@ -210,12 +212,15 @@ export const PhotoCanvas: React.FC<Props> = ({ panels }) => {
           start: 'top top',
           end: 'bottom bottom',
           /**
-           * Was 1. A full second of catch-up on top of Lenis's own ~1s of momentum
+           * Was 1: a full second of catch-up on top of Lenis's own ~1s of momentum
            * stacked into roughly two seconds between moving the wheel and the
-           * animation settling, which does not read as smoothness — it reads as lag.
-           * Enough to glide, not enough to trail.
+           * animation settling, which read as lag. Then 0.45, which — together with
+           * the shorter track — made the panels too twitchy, jumping with every
+           * wheel movement. 0.7 is the middle: Lenis is now 0.8s, so the total
+           * settle time is about 1.5s rather than 2s, and the panels still ease
+           * into place instead of snapping to the wheel.
            */
-          scrub: 0.45,
+          scrub: 0.7,
           /**
            * One callback for everything that depends on scroll position, rather than
            * two more ScrollTriggers over the identical range. Both of the triggers
