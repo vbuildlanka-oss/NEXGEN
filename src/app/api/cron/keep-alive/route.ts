@@ -10,12 +10,9 @@ import { getPayloadClient } from '@/lib/payload'
  * and resumed it. This endpoint performs the cheapest possible read so that a
  * scheduled ping counts as activity.
  *
- * NexGen is on Supabase Pro, which does not pause, so no cron job is scheduled
- * (there is no `crons` entry in vercel.json). The endpoint is kept because it
- * doubles as a health check — and if the project is ever downgraded to the free
- * plan, adding the schedule back is a three-line change:
- *
- *   "crons": [{ "path": "/api/cron/keep-alive", "schedule": "0 6 * /3 * *" }]
+ * NexGen moved from Supabase Pro to the free plan, so this is scheduled again:
+ * the `crons` entry in vercel.json calls it every third day at 06:00 UTC, well
+ * inside the seven-day window.
  *
  * It is also a useful uptime probe: it returns 200 only if the database answered.
  */

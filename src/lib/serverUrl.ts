@@ -46,9 +46,36 @@ export function resolveServerURL(): string {
 export function resolveAllowedOrigins(): string[] {
   return Array.from(
     new Set(
-      [explicitURL(), vercelProductionURL(), vercelDeploymentURL(), 'http://localhost:3000'].filter(
-        (origin): origin is string => Boolean(origin),
-      ),
+      [explicitURL(), vercelProductionURL(), vercelDeploymentURL(), 'http://localhost:3000']
+        .filter((origin): origin is string => Boolean(origin))
+        .flatMap(withWwwVariant),
     ),
   )
+}
+
+/**
+ * An origin plus its `www.` twin (or bare twin, if it already has `www.`).
+ *
+ * Payload matches the browser's `Origin` header against this list character for
+ * character, and a custom domain is usually reachable both ways. If the setting
+ * says `https://example.lk` and an editor opens `https://www.example.lk/admin`,
+ * every save arrives from an origin that is not on the list: Payload drops the
+ * login for that request, the save is refused as unauthenticated, and the admin
+ * shows "This page couldn't load". Both spellings are the same site, so both are
+ * allowed. Platform hosts (`*.vercel.app`) and localhost are left as they are.
+ */
+function withWwwVariant(origin: string): string[] {
+  try {
+    const url = new URL(origin)
+
+    if (url.hostname === 'localhost' || url.hostname.endsWith('.vercel.app')) return [origin]
+
+    const twin = url.hostname.startsWith('www.')
+      ? url.hostname.slice(4)
+      : `www.${url.hostname}`
+
+    return [origin, `${url.protocol}//${twin}${url.port ? `:${url.port}` : ''}`]
+  } catch {
+    return [origin]
+  }
 }
