@@ -22,8 +22,27 @@ const vercelProductionURL = (): string | undefined =>
 const vercelDeploymentURL = (): string | undefined =>
   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
 
-const explicitURL = (): string | undefined =>
-  process.env.NEXT_PUBLIC_SERVER_URL?.replace(/\/$/, '') || undefined
+/**
+ * The hand-set origin, unless it is still a placeholder.
+ *
+ * The live deployment was found with `https://placeholder.vercel.app` here,
+ * which pointed the sitemap, canonical URLs and live preview at a site that does
+ * not exist. A placeholder is treated as unset, so the platform's real production
+ * domain (the custom domain, once one is attached in Vercel) is used instead.
+ */
+const explicitURL = (): string | undefined => {
+  const value = process.env.NEXT_PUBLIC_SERVER_URL?.trim().replace(/\/$/, '')
+  if (!value) return undefined
+
+  try {
+    const { hostname } = new URL(value)
+    if (/placeholder|your-?(site|domain)|example\.(com|lk)$/i.test(hostname)) return undefined
+  } catch {
+    return undefined
+  }
+
+  return value
+}
 
 /**
  * The canonical origin, with no trailing slash.
