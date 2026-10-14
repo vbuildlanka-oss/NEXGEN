@@ -595,6 +595,8 @@ async function seedEvents(payload: Payload): Promise<Map<string, number>> {
         tagline: seed.tagline,
         startsAt: seed.startsAt,
         endsAt: seed.endsAt,
+        // The sample events are dated relative to today, so their label follows.
+        eventStatus: new Date(seed.startsAt).getTime() < Date.now() ? "past" : "upcoming",
         venue: seed.venue,
         city: seed.city,
         ticketPrice: seed.ticketPrice,

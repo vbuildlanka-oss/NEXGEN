@@ -127,26 +127,24 @@ export async function getHomePanels({ draft = false }: QueryOptions = {}): Promi
 /* ───────────────────────────────  events  ──────────────────────────────── */
 
 /**
- * Upcoming events: anything that has not finished yet.
+ * Upcoming events: those the editor has labelled "Upcoming".
  *
- * Uses `endsAt` when the editor supplied one so a two-day festival stays
- * "upcoming" while it is actually running, and falls back to `startsAt`.
+ * The label is set in the admin (Events → sidebar → "Upcoming or past"), not
+ * worked out from the dates. Dates decided this before, and one mistyped end
+ * date was enough to show an event months away as finished.
  */
 export async function getUpcomingEvents({
   limit = 50,
   draft = false,
 }: QueryOptions & { limit?: number } = {}): Promise<Event[]> {
-  const now = new Date().toISOString()
-
   return safeQuery(
     'upcoming-events',
     async () => {
       const payload = await getPayloadClient()
       const result = await payload.find({
         collection: 'events',
-        where: {
-          or: [{ endsAt: { greater_than_equal: now } }, { startsAt: { greater_than_equal: now } }],
-        },
+        where: { eventStatus: { equals: 'upcoming' } },
+        // Soonest first.
         sort: 'startsAt',
         limit,
         depth: 2,
@@ -160,26 +158,18 @@ export async function getUpcomingEvents({
   )
 }
 
+/** Past events: those the editor has labelled "Past". Most recent first. */
 export async function getPastEvents({
   limit = 50,
   draft = false,
 }: QueryOptions & { limit?: number } = {}): Promise<Event[]> {
-  const now = new Date().toISOString()
-
   return safeQuery(
     'past-events',
     async () => {
       const payload = await getPayloadClient()
       const result = await payload.find({
         collection: 'events',
-        where: {
-          and: [
-            { startsAt: { less_than: now } },
-            {
-              or: [{ endsAt: { less_than: now } }, { endsAt: { exists: false } }],
-            },
-          ],
-        },
+        where: { eventStatus: { equals: 'past' } },
         sort: '-startsAt',
         limit,
         depth: 2,
@@ -194,19 +184,12 @@ export async function getPastEvents({
 }
 
 /**
- * Whether an event has finished.
+ * Whether an event is over, according to its "Upcoming or past" label.
  *
- * Lives in the data layer rather than in a page component on purpose. Reading the
- * clock while rendering makes a component's output depend on something outside
- * its props, which breaks the guarantee that a prerendered page and a live
- * re-render agree — React flags it, and rightly so. Deciding it here, alongside
- * the query that loaded the event, keeps rendering a pure function of its data.
+ * Reads only the event's own data, so rendering stays a pure function of it.
  */
-export function isEventPast(event: Pick<Event, 'startsAt' | 'endsAt'>): boolean {
-  const finishes = event.endsAt ?? event.startsAt
-  if (!finishes) return false
-
-  return new Date(finishes).getTime() < Date.now()
+export function isEventPast(event: Pick<Event, 'eventStatus'>): boolean {
+  return event.eventStatus === 'past'
 }
 
 export async function getEventBySlug(

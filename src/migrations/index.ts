@@ -4,6 +4,7 @@ import * as migration_20260912_085532_typography_settings from './20260912_08553
 import * as migration_20260913_unique_section_images from './20260913_unique_section_images';
 import * as migration_20260917_123624_page_wording_globals from './20260917_123624_page_wording_globals';
 import * as migration_20260917_repair_community_image from './20260917_repair_community_image';
+import * as migration_20261014_045111_event_status from './20261014_045111_event_status';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20260917_repair_community_image.up,
     down: migration_20260917_repair_community_image.down,
-    name: '20260917_repair_community_image'
+    name: '20260917_repair_community_image',
+  },
+  {
+    up: migration_20261014_045111_event_status.up,
+    down: migration_20261014_045111_event_status.down,
+    name: '20261014_045111_event_status'
   },
 ];

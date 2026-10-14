@@ -24,8 +24,9 @@ export const Welcome: React.FC = () => (
     </p>
     <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.7, maxWidth: '70ch' }}>
       <li>
-        <strong>Events</strong> — add a show, set its date, venue, line-up and ticket price. Anything
-        dated in the future appears under Upcoming; past dates move to the archive on their own.
+        <strong>Events</strong> — add a show, set its date, venue, line-up and ticket price. Choose
+        Upcoming or Past in the sidebar: it decides which list the event appears in and how its
+        page is worded. Switch it to Past once the night is over.
       </li>
       <li>
         <strong>Updates</strong> — news, artist and event announcements, collaborations, milestones

@@ -11,9 +11,12 @@ const eventPath = (doc: Record<string, unknown>) =>
 /**
  * Events.
  *
- * "Upcoming" versus "Past" is derived from `startsAt` rather than being a flag
- * the editor has to remember to flip — an event moves itself into the archive
- * the moment it finishes.
+ * "Upcoming" versus "Past" is the `eventStatus` field, set by the editor. It
+ * used to be worked out from the dates, which meant one mistyped end date could
+ * file a show months away under "Past" and print "This one has been and gone"
+ * on its page. An explicit label cannot be wrong behind the editor's back: it
+ * decides the listing, the wording on the event page and the card style, and
+ * the dates are only ever displayed.
  *
  * `ticketPrice` is plain data. Nothing in this build charges anyone; the
  * `orders` and `tickets` collections exist so a Stripe checkout can be added
@@ -29,9 +32,9 @@ export const Events: CollectionConfig = {
   admin: {
     group: 'Content',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'startsAt', 'venue', 'ticketPrice', '_status'],
+    defaultColumns: ['title', 'eventStatus', 'startsAt', 'venue', '_status'],
     description:
-      'Every NexGen event. Events with a date in the future show under "Upcoming"; once the date passes they move to "Past Events" automatically.',
+      'Every NexGen event. Use "Upcoming or past" in the sidebar of each event to choose which list it appears in and how its page is worded.',
     preview: (doc) => buildPreviewUrl(eventPath(doc as Record<string, unknown>) ?? '/events'),
   },
   access: {
@@ -108,7 +111,6 @@ export const Events: CollectionConfig = {
                   admin: {
                     width: '50%',
                     date: { pickerAppearance: 'dayAndTime', timeFormat: 'HH:mm' },
-                    description: 'Decides whether this is an upcoming or a past event.',
                   },
                 },
                 {
@@ -118,6 +120,16 @@ export const Events: CollectionConfig = {
                   admin: {
                     width: '50%',
                     date: { pickerAppearance: 'dayAndTime', timeFormat: 'HH:mm' },
+                    description: 'Optional. Must be after the start.',
+                  },
+                  // An end before the start is always a typo, usually the wrong day or
+                  // year in the picker, and it shows on the site as a nonsense time
+                  // range. Better caught here than spotted by a visitor.
+                  validate: (value: unknown, { siblingData }: { siblingData: Record<string, unknown> }) => {
+                    if (!value || !siblingData?.startsAt) return true
+                    const ends = new Date(value as string).getTime()
+                    const starts = new Date(siblingData.startsAt as string).getTime()
+                    return ends >= starts || 'The end must be after the start. Check the date and the year.'
                   },
                 },
               ],
@@ -233,6 +245,23 @@ export const Events: CollectionConfig = {
           ],
         },
       ],
+    },
+    {
+      name: 'eventStatus',
+      type: 'select',
+      label: 'Upcoming or past',
+      required: true,
+      defaultValue: 'upcoming',
+      index: true,
+      options: [
+        { label: 'Upcoming', value: 'upcoming' },
+        { label: 'Past', value: 'past' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description:
+          'Upcoming: listed under Upcoming events, with tickets. Past: moved to the archive, and the page links to the photos instead. Switch it to Past once the night is over.',
+      },
     },
     ...[slugField('title')],
     {

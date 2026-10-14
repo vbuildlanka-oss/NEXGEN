@@ -154,7 +154,7 @@ export interface UserAuthOperations {
   };
 }
 /**
- * Every NexGen event. Events with a date in the future show under "Upcoming"; once the date passes they move to "Past Events" automatically.
+ * Every NexGen event. Use "Upcoming or past" in the sidebar of each event to choose which list it appears in and how its page is worded.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events".
@@ -182,10 +182,10 @@ export interface Event {
         id?: string | null;
       }[]
     | null;
-  /**
-   * Decides whether this is an upcoming or a past event.
-   */
   startsAt: string;
+  /**
+   * Optional. Must be after the start.
+   */
   endsAt?: string | null;
   venue: string;
   city?: string | null;
@@ -229,6 +229,10 @@ export interface Event {
    * Optional wide photo used as the full-width backdrop on the event page. A landscape shot works best.
    */
   backgroundImage?: (number | null) | Media;
+  /**
+   * Upcoming: listed under Upcoming events, with tickets. Past: moved to the archive, and the page links to the photos instead. Switch it to Past once the night is over.
+   */
+  eventStatus: 'upcoming' | 'past';
   /**
    * The web address for this page. Leave blank and it will be created from the title automatically. Avoid changing it once the page is live, or existing links will break.
    */
@@ -732,6 +736,7 @@ export interface EventsSelect<T extends boolean = true> {
   soldOut?: T;
   coverImage?: T;
   backgroundImage?: T;
+  eventStatus?: T;
   slug?: T;
   featured?: T;
   updatedAt?: T;
