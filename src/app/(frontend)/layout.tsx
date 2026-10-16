@@ -4,6 +4,7 @@ import React from 'react'
 
 import { LivePreviewRefresh } from '@/components/LivePreviewRefresh'
 import { SmoothScroll } from '@/components/motion/SmoothScroll'
+import { Analytics } from '@/components/site/Analytics'
 import { AnnouncementBar } from '@/components/site/AnnouncementBar'
 import { Footer } from '@/components/site/Footer'
 import { Navbar } from '@/components/site/Navbar'
@@ -172,6 +173,8 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         />
 
         <LivePreviewRefresh serverURL={resolveServerURL()} />
+
+        <Analytics />
       </body>
     </html>
   )
